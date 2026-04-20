@@ -12,7 +12,42 @@ from scipy.ndimage import convolve
 
 
 class NDVIProcessor:
+    """
+    A comprehensive processor for analyzing multispectral imagery and extracting vegetation,
+    water, and urban features using various spectral indices and height information.
+    
+    This class provides functionality to:
+    - Process RGBI (Red, Green, Blue, Infrared) imagery
+    - Calculate vegetation indices (NDVI, NDWI)
+    - Perform height-based classification using DSM/DEM data
+    - Extract vegetation, water, and urban features
+    - Generate classification masks and export results
+    
+    The processor supports both height-aware and height-independent classification,
+    with optional debug outputs for intermediate processing steps.
+    
+    Attributes:
+        use_height (bool): Whether to incorporate height information from DSM/DEM data
+        in_debug_mode (bool): Whether to save intermediate processing outputs for debugging
+    
+    Example:
+        >>> processor = NDVIProcessor()
+        >>> processor.set_height_usage(True)
+        >>> processor.set_debug_mode(True)
+        >>> rgbi, dsm, dtm, transform = processor.read_raster_datasets(
+        ...     rgbi_path, dsm_path, dem_path
+        ... )
+        >>> processor.process_vegetation(
+        ...     rgbi, transform, dsm, dtm, output_path, height_tolerance=3.5
+        ... )
+    """
     def __init__(self):
+        """
+        Initialize the NDVIProcessor with default settings.
+        
+        The processor is initialized with height usage enabled and debug mode disabled.
+        These settings can be modified using the respective setter methods.
+        """
         self.use_height = True
         self.in_debug_mode = False
 
@@ -202,7 +237,25 @@ class NDVIProcessor:
 
 
     def process_slope(self, input_dem_path, output_slope_path, slope_format='degrees'):
-    
+        """
+        Process a DEM to calculate slope using GDAL's DEMProcessing functionality.
+        
+        This method uses GDAL's built-in slope calculation algorithm to generate
+        slope rasters from digital elevation models. The output format can be
+        specified as degrees, percent, or rise over run.
+        
+        Args:
+            input_dem_path (str): Path to the input DEM raster file
+            output_slope_path (str): Path where the output slope raster will be saved
+            slope_format (str, optional): Output format - 'degrees', 'percent', or 'rise_run'.
+                                        Defaults to 'degrees'.
+        
+        Returns:
+            None
+            
+        Raises:
+            Exception: If DEM file cannot be opened or processing fails
+        """
 
         try:
             # Open the input DEM dataset
@@ -237,6 +290,31 @@ class NDVIProcessor:
                         height_tolerance=3.5, max_height=None, 
                         greater_than=True, index_value=0.3,
                         mode='ndvi'):
+        """
+        General processing method for extracting features using spectral indices and height data.
+        
+        This flexible method can process either NDVI or NDWI indices and apply height-based
+        filtering to extract specific features. Supports both vegetation and water extraction
+        depending on the mode and threshold settings.
+        
+        Args:
+            rgbi (np.ndarray): Multi-band image array (Red, Green, Blue, Infrared)
+            transform (rasterio.Affine): Affine transformation for georeferencing
+            dsm (np.ndarray): Digital Surface Model array
+            dem (np.ndarray): Digital Elevation Model array
+            output_path (str): Path to save the output classification raster
+            height_tolerance (float, optional): Minimum height above ground for classification.
+                                              Defaults to 3.5 meters.
+            max_height (float, optional): Maximum height for classification. Defaults to None.
+            greater_than (bool, optional): Whether to use greater than (>) or less than (<)
+                                         comparison for index threshold. Defaults to True.
+            index_value (float, optional): Threshold value for spectral index classification.
+                                         Defaults to 0.3.
+            mode (str, optional): Spectral index mode - 'ndvi' or 'ndwi'. Defaults to 'ndvi'.
+        
+        Returns:
+            None
+        """
         
         # Ensure output directory exists
         output_dir = os.path.dirname(output_path)
@@ -290,6 +368,17 @@ class NDVIProcessor:
         print(output_path, "created")
 
     def export_image(self, image, output_path, transform):
+        """
+        Export a multi-band image array to a GeoTIFF file.
+        
+        Args:
+            image (np.ndarray): Multi-band image array to export
+            output_path (str): Path to save the output GeoTIFF file
+            transform (rasterio.Affine): Affine transformation for georeferencing
+        
+        Returns:
+            None
+        """
         with rasterio.open(output_path, 'w', driver='GTiff', height=image.shape[0],
                            width=image.shape[1], count=3, dtype=np.float32,
                            transform=transform) as dst:
@@ -394,6 +483,19 @@ class NDVIProcessor:
         return ndwi
     
     def calculate_brightness_index(self, rgbi):
+        """
+        Calculate the Brightness Index (BI) from an RGBI image array.
+        
+        The Brightness Index is calculated as the square root of the sum of squared
+        RGB values, providing a measure of overall pixel brightness.
+        Formula: BI = sqrt(Red² + Green² + Blue²)
+        
+        Args:
+            rgbi (np.ndarray): A 4-channel image array (Red, Green, Blue, Infrared)
+        
+        Returns:
+            np.ndarray: The computed Brightness Index values as a float array
+        """
         
         RED = rgbi[0]
         GREEN = rgbi[1]
@@ -544,7 +646,23 @@ class NDVIProcessor:
         return height_vegetation
     
     def fill_holes(self, heighted_vegetation):
-
+        """
+        Fill holes in a binary vegetation mask using GDAL's FillNodata function.
+        
+        This method uses GDAL's interpolation algorithm to fill small gaps and holes
+        in vegetation classification results, which is more effective than simple
+        morphological operations for larger gaps.
+        
+        Args:
+            heighted_vegetation (np.ndarray): Binary vegetation mask with holes to fill
+        
+        Returns:
+            gdal.Band: GDAL raster band object with filled holes
+            
+        Note:
+            The method uses a maximum search distance of 10 pixels and 1 smoothing
+            iteration. Adjust these parameters based on the size of holes to fill.
+        """
 
         nodata_value = 0 
         mask_array = (heighted_vegetation != nodata_value).astype(np.uint8)
