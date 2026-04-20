@@ -8,7 +8,7 @@ Install dependencies:
 
 Examples:
 	python imagery_rasterio_read.py
-	python imagery_rasterio_read.py --dataset elevation --path "some/path/file.tif"
+	python imagery_rasterio_read.py --dataset elevation --path "some/path/file.tiff"
 	python imagery_rasterio_read.py --bbox 174.7 -36.9 174.8 -36.8
 	python imagery_rasterio_read.py --info-only
 """
@@ -156,9 +156,11 @@ def save_raster(
 	) as dst:
 		if len(data.shape) == 3:
 			# Multi-band
+			print(f"Saving multi-band raster to {output_path}")
 			dst.write(data)
 		else:
 			# Single band
+			print(f"Saving single-band raster to {output_path}")
 			dst.write(data, 1)
 
 
@@ -218,9 +220,11 @@ def parse_args() -> argparse.Namespace:
 		default="",
 		help="Override AWS region directly (optional).",
 	)
+
+	#default="taranaki/taranaki_2022-2023_0.1m/rgb/2193/BQ31_10000_0101.tiff",
 	parser.add_argument(
 		"--path",
-		default="taranaki/taranaki_2022-2023_0.1m/rgb/2193/BQ31_10000_0101.tif",
+		default="wellington/wellington_2025_0.2m/rgbnir/2193/BM36_5000_1010.tiff",
 		help="Object key/path to specific raster file.",
 	)
 	parser.add_argument(
@@ -248,7 +252,7 @@ def parse_args() -> argparse.Namespace:
 	)
 	parser.add_argument(
 		"--output",
-		default="linz_rasterio_output.tif",
+		default="linz_rasterio_output.tiff",
 		help="Local output filename for extracted data.",
 	)
 	return parser.parse_args()
@@ -260,6 +264,7 @@ def main() -> int:
 	dataset = LINZ_DATASETS[args.dataset]
 	bucket = args.bucket or dataset.bucket
 	region = args.region or dataset.region
+	output = args.output
 
 	print(f"Using bucket={bucket}, region={region}")
 	print(f"Target path: {args.path}")
@@ -320,8 +325,8 @@ def main() -> int:
 				print(f"Mean: {data.mean():.2f}")
 				
 				# Save to local file
-				save_raster(data, metadata, args.output)
-				print(f"\n=== Saved to: {args.output} ===")
+				save_raster(data, metadata, output)
+				print(f"\n=== Saved to: {output} ===")
 
 	except Exception as exc:
 		print(f"Error accessing raster data: {exc}")

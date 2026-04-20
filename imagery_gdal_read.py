@@ -19,7 +19,7 @@ gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'YES')
 # Method A: Using AWS credentials directly
 gdal.SetConfigOption('AWS_ACCESS_KEY_ID', 'your_access_key_here')
 gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', 'your_secret_key_here') 
-gdal.SetConfigOption('AWS_REGION', 'your-region')  # e.g., 'us-east-1'
+gdal.SetConfigOption('AWS_REGION', 'your-region')  # e.g., 'ap-southeast-2'
 # gdal.SetConfigOption('AWS_SESSION_TOKEN', 'your_token_if_using_sts')  # Optional for STS
 
 # Method B: Using AWS profile (reads from ~/.aws/credentials)

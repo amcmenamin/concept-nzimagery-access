@@ -28,7 +28,8 @@ Examples:
 """
 
 from __future__ import annotations
-
+import os
+import time
 import argparse
 from dataclasses import dataclass
 
@@ -184,10 +185,12 @@ def download_all_images(
 	
 	return downloaded_files
 
+#gisborne/gisborne_2025_0.05m/rgb/2193/BG43_1000_2229.tiff
+#taranaki/taranaki_2022-2023_0.1m/rgb/2193/
 
 def download_dataset_images(
 	dataset_name: str = "imagery",
-	path_prefix: str = "taranaki/taranaki_2022-2023_0.1m/rgb/2193/",
+	path_prefix: str = "gisborne/gisborne_2025_0.05m/rgb/2193/",
 	output_dir: str = "downloads",
 	limit: int = 0,
 ) -> list[str]:
@@ -247,7 +250,7 @@ def parse_args() -> argparse.Namespace:
 	)
 	parser.add_argument(
 		"--path",
-		default="taranaki/taranaki_2022-2023_0.1m/rgb/2193/",
+		default="gisborne/gisborne_2025_0.05m/rgb/2193/BG43_1000_2229.tiff",
 		help="Object key/path inside the bucket.",
 	)
 	parser.add_argument(
@@ -307,31 +310,37 @@ def main() -> int:
 	dataset = LINZ_DATASETS[args.dataset]
 	bucket = args.bucket or dataset.bucket
 	region = args.region or dataset.region
+	# path = args.path
+	# output_dir = args.output_dir
+	# output = args.output
+	path = "wellington/wellington_2025_0.2m/rgbnir/2193/BM36_5000_1010.tiff"
+	output_dir =  r"c:\data\imagery" 
+	output = "BM36_5000_1010_RGBI.tiff"
 
 	store = get_public_store(bucket=bucket, region=region)
 
 	print(f"Using bucket={bucket}, region={region}")
-	print(f"Target path: {args.path}")
+	print(f"Target path: {path}")
 
 	try:
 		if args.download_all:
 			# Download all images from the specified prefix
-			prefix = args.path if args.path.endswith("/") else f"{args.path}/"
+			prefix = path if path.endswith("/") else f"{path}/"
 			print(f"Downloading all images under prefix: {prefix}")
 			downloaded_files = download_all_images(
 				store=store,
 				prefix=prefix,
-				output_dir=args.output_dir,
+				output_dir=output_dir,
 				image_extensions=tuple(args.image_extensions),
 				limit=args.limit,
 			)
 			if downloaded_files:
-				print(f"\nDownloaded files saved to: {args.output_dir}")
+				print(f"\nDownloaded files saved to: {output_dir}")
 			else:
 				print("No files were downloaded.")
 		elif args.list_prefix:
 			# Ensure folder-style prefixes also match nested keys as expected.
-			prefix = args.path if args.path.endswith("/") else f"{args.path}/"
+			prefix = path if path.endswith("/") else f"{path}/"
 			print(f"Listing objects under prefix: {prefix}")
 			paths = list_objects(
 				store=store,
@@ -346,13 +355,16 @@ def main() -> int:
 					print(path)
 				print(f"Total objects listed: {len(paths)}")
 		elif args.header_only:
-			header = read_object_range(store=store, path=args.path, length=args.range_length)
+			header = read_object_range(store=store, path=path, length=args.range_length)
 			print(f"Read {len(header)} bytes from start of object.")
 			print(f"First 32 bytes (hex): {header[:32].hex()}")
 		else:
 			print("Starting download...")
-			size = download_object(store=store, path=args.path, output_file=args.output)
-			print(f"Successfully downloaded to {args.output}")
+			starttime = time.time()
+			size = download_object(store=store, path=path, output_file=os.path.join(output_dir, output))
+			duration = time.time() - starttime
+			print(f"Download completed in {duration:.2f} seconds")
+			print(f"Successfully downloaded to {os.path.join(output_dir, output)}")
 			print(f"Size: {size / (1024 * 1024):.2f} MB")
 	except Exception as exc:
 		print(f"Error accessing LINZ data: {exc}")

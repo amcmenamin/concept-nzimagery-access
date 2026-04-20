@@ -1,7 +1,8 @@
 """Describe TIFF/COG properties using GDAL.
 """
-
 from __future__ import annotations
+
+import setup_gdal_env # This will configure the environment for GDAL
 from pathlib import Path
 from osgeo import gdal
 
@@ -110,8 +111,8 @@ def describe_tiff(path: str, results_file: str = "") -> None:
 
 
 def main() -> int:
-    path = r"C:\Data\imagery\BH28_500_095032.tiff"
-    results_file = r"C:\Data\imagery\BH28_500_095032_info.txt"
+    path = r"C:\Data\imagery\BM36_5000_1010_RGBI.tiff"
+    results_file = r"C:\Data\imagery\BM36_5000_1010_RGBI.txt"
 
     try:
         describe_tiff(path, results_file)
