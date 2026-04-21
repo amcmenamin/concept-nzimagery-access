@@ -1,6 +1,6 @@
-
 import setup_gdal_env  # Configure GDAL environment
 from osgeo import gdal
+
 print(gdal.VersionInfo("LIBS"))
 
 # libwebp support is indicated by the presence of "WEBP" in the list of supported formats.
@@ -12,7 +12,9 @@ if webp_supported:
     print("GDAL has WEBP support.")
 else:
     print("GDAL does NOT have WEBP support.")
-    print("You may need to install GDAL with WEBP support or build GDAL with WEBP enabled.")
+    print(
+        "You may need to install GDAL with WEBP support or build GDAL with WEBP enabled."
+    )
 
 
 import rasterio
@@ -26,4 +28,3 @@ with rasterio.Env() as env:
     print(env)
     print(env.drivers())
     print(f"WEBP support: {'WEBP' in env.drivers()}")
-

@@ -10,9 +10,9 @@ from datetime import datetime
 
 # Option 1: PUBLIC S3 bucket access (LINZ datasets)
 # Configure GDAL for AWS S3 public bucket access
-gdal.SetConfigOption('AWS_REGION', 'ap-southeast-2')
-gdal.SetConfigOption('AWS_NO_SIGN_REQUEST', 'YES')
-gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'YES')
+gdal.SetConfigOption("AWS_REGION", "ap-southeast-2")
+gdal.SetConfigOption("AWS_NO_SIGN_REQUEST", "YES")
+gdal.SetConfigOption("GDAL_DISABLE_READDIR_ON_OPEN", "YES")
 
 # Option 2: PRIVATE S3 bucket access (requires credentials)
 # Uncomment and configure the following for private S3 access:
@@ -50,7 +50,9 @@ print(f"Starting download at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 start_time = time.time()
 
 # Define source and destination
-source_url = "/vsis3/nz-imagery/taranaki/taranaki_2022-2023_0.1m/rgb/2193/BH28_500_095032.tiff"
+source_url = (
+    "/vsis3/nz-imagery/taranaki/taranaki_2022-2023_0.1m/rgb/2193/BH28_500_095032.tiff"
+)
 destination_file = "c:\\data\\imagery\\image.tiff"
 
 # =============================================================================
@@ -96,8 +98,8 @@ else:
 print("Downloading with metadata preservation...")
 result = gdal.Translate(
     destination_file,  # destination (local file)
-    src,               # source (opened dataset)
-    creationOptions=creation_opts
+    src,  # source (opened dataset)
+    creationOptions=creation_opts,
 )
 
 end_time = time.time()
@@ -108,15 +110,17 @@ print(f"Download duration: {duration:.2f} seconds")
 
 if result:
     # Calculate file size and speed
-    file_size = os.path.getsize(destination_file) if os.path.exists(destination_file) else 0
+    file_size = (
+        os.path.getsize(destination_file) if os.path.exists(destination_file) else 0
+    )
     file_size_mb = file_size / (1024 * 1024)
-    
+
     print("✅ File downloaded successfully!")
     print(f"📄 File: {destination_file}")
     print(f"📊 Size: {file_size_mb:.2f} MB")
     if duration > 0:
-        print(f"🚀 Speed: {file_size_mb/duration:.2f} MB/s")
-    
+        print(f"🚀 Speed: {file_size_mb / duration:.2f} MB/s")
+
     # Show preserved metadata
     if creation_opts:
         print(f"🔧 Preserved metadata: {', '.join(creation_opts)}")
@@ -138,7 +142,7 @@ gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXA
 gdal.SetConfigOption('AWS_REGION', 'us-west-2')
 """
 
-# Example 2: Using AWS CLI profile (recommended)  
+# Example 2: Using AWS CLI profile (recommended)
 """
 # First run: aws configure --profile myprofile
 gdal.SetConfigOption('AWS_PROFILE', 'myprofile')
