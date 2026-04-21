@@ -25,6 +25,7 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass
 import time
 
+import setup_gdal_env  # Configure GDAL environment
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import box
@@ -54,6 +55,41 @@ LINZ_DATASETS: Dict[str, DatasetInfo] = {
 }
 
 
+def extract_path_components(href: str) -> Dict[str, str]:
+    """
+    Extract region and sub_region components from href path.
+    
+    Args:
+        href: Collection href path (e.g., "./bay-of-plenty/bay-of-plenty_2015-2016_0.125m/rgb/2193/collection.json")
+    
+    Returns:
+        Dictionary with region and sub_region fields
+    """
+    # Remove leading ./ and trailing /collection.json
+    clean_path = href.replace('./', '').replace('/collection.json', '')
+    
+    # Split into parts
+    parts = clean_path.split('/')
+    
+    # Extract region from the first part of the path (left of first /)
+    region = parts[0].replace('-', ' ') if len(parts) > 0 else ''
+    
+    # Extract sub_region from the second part of the path (after first / to first _)
+    sub_region = ''
+    if len(parts) > 1:
+        second_part = parts[1]
+        underscore_pos = second_part.find('_')
+        if underscore_pos != -1:
+            sub_region = second_part[:underscore_pos].replace('-', ' ')
+        else:
+            sub_region = second_part.replace('-', ' ')
+    
+    return {
+        'region': region,
+        'sub_region': sub_region
+    }
+
+
 def get_public_store(bucket: str, region: str) -> S3Store:
     """Create an unsigned S3 store for public AWS Open Data buckets."""
     return S3Store(
@@ -79,6 +115,8 @@ def read_collection_json(store: S3Store, collection_href: str) -> Optional[Dict[
         clean_path = collection_href.replace('./', '').replace('\\', '/')
         
         print(f"   Reading: {clean_path}")
+        if 'rgbnir' in clean_path:
+            print("  RGBNIR files")
         
         # Get the object from S3
         response = obs.get(store, clean_path)
@@ -141,17 +179,17 @@ def extract_bbox_geometry(collection_data: Dict[str, Any]) -> Optional[Any]:
         return None
 
 
-def process_catalog_to_geoparquet(
+def process_catalog_to_csv(
     catalog_parquet_path: str,
     output_dir: str = "c:/temp",
     bucket: str = "nz-imagery"
 ) -> None:
     """
-    Process catalog parquet file and create geoparquet files by type.
+    Process catalog parquet file and create CSV files by type.
     
     Args:
         catalog_parquet_path: Path to the catalog parquet file
-        output_dir: Directory to save geoparquet files
+        output_dir: Directory to save CSV files
         bucket: S3 bucket name to read collection files from
     """
     print(f"Reading catalog from: {catalog_parquet_path}")
@@ -186,11 +224,11 @@ def process_catalog_to_geoparquet(
         print(f"\n🔄 Processing type: '{data_type}'")
         
         # Filter data for this type
-        type_df = df[df['type'] == data_type].copy()
+        type_df = df[df['type'] == data_type].copy().reset_index(drop=True)
+
         print(f"   Found {len(type_df)} records for type '{data_type}'")
         
-        # Lists to store geometry and additional metadata
-        geometries = []
+        # Lists to store additional metadata
         collection_metadata = []
         
         # Process each collection in this type
@@ -203,66 +241,59 @@ def process_catalog_to_geoparquet(
             collection_data = read_collection_json(store, href)
             
             if collection_data:
-                # Extract geometry from bbox
-                geom = extract_bbox_geometry(collection_data)
-                geometries.append(geom)
+                # Extract path components for region and sub_region
+                path_components = extract_path_components(href)
                 
                 # Extract additional metadata
                 links_count = len(collection_data.get('links', []))
                 metadata = {
+                    'region': path_components['region'],
+                    'sub_region': path_components['sub_region'],
                     'collection_id': collection_data.get('id', ''),
                     'collection_title': collection_data.get('title', ''),
                     'collection_description': collection_data.get('description', ''),
                     'license': collection_data.get('license', ''),
-                    'links_count': links_count,
+                    'image_count': links_count,
                 }
                 collection_metadata.append(metadata)
             else:
-                # Failed to read collection
-                geometries.append(None)
+                # Failed to read collection - extract what we can from href
+                path_components = extract_path_components(href)
                 collection_metadata.append({
+                    'region': path_components['region'],
+                    'sub_region': path_components['sub_region'],
                     'collection_id': '',
                     'collection_title': '',
                     'collection_description': '',
                     'license': '',
-                    'links_count': 0,
+                    'image_count': 0,
                 })
         
-        # Add geometry and metadata to dataframe
-        type_df['geometry'] = geometries
-        
-        # Add collection metadata columns
+        # Add collection metadata columns (skip geometry)
         metadata_df = pd.DataFrame(collection_metadata)
         for col in metadata_df.columns:
             type_df[col] = metadata_df[col]
         
-        # Remove records without geometry
-        valid_geom_mask = type_df['geometry'].notna()
-        type_gdf = type_df[valid_geom_mask].copy()
+        # Filter out records that failed to process (where collection_metadata is empty)
+        valid_records_mask = type_df['collection_id'] != ''
+        final_df = type_df[valid_records_mask].copy()
         
-        print(f"   Successfully processed {len(type_gdf)}/{len(type_df)} records with geometry")
+        print(f"   Successfully processed {len(final_df)}/{len(type_df)} records with metadata")
         
-        if len(type_gdf) > 0:
-            # Convert to GeoDataFrame
-            gdf = gpd.GeoDataFrame(type_gdf, geometry='geometry', crs='EPSG:4326')
-            
-            # Save as geoparquet
-            output_filename = f"nz_imagery_collections_{data_type}.parquet"
+        if len(final_df) > 0:
+            # Save as CSV
+            output_filename = f"nz_imagery_collections_{data_type}.csv"
             output_path = os.path.join(output_dir, output_filename)
             
             print(f"   Saving to: {output_path}")
-            gdf.to_parquet(output_path, index=False)
+            final_df.to_csv(output_path, index=False)
             
             # Display summary
-            print(f"   ✅ Saved {len(gdf)} records to {output_filename}")
-            print(f"   📊 Columns: {list(gdf.columns)}")
-            
-            # Show sample of bbox info
-            if len(gdf) > 0:
-                bounds = gdf.total_bounds
-                print(f"   🗺️  Spatial extent: {bounds[0]:.6f}, {bounds[1]:.6f}, {bounds[2]:.6f}, {bounds[3]:.6f}")
+            print(f"   ✅ Saved {len(final_df)} records to {output_filename}")
+            print(f"   📊 Columns: {list(final_df.columns)}")
         else:
-            print(f"   ⚠️  No valid geometries found for type '{data_type}' - skipping geoparquet creation")
+            print(f"   ⚠️  No valid metadata found for type '{data_type}' - skipping CSV creation")
+
 
 
 def main():
@@ -272,13 +303,13 @@ def main():
     output_dir = r"c:\temp"
     
     print("=" * 60)
-    print("CREATING GEOPARQUET FILES FROM CATALOG")
+    print("CREATING CSV FILES FROM CATALOG")
     print("=" * 60)
     
     # Check if catalog file exists
     if not os.path.exists(catalog_parquet_path):
         print(f"❌ Catalog file not found: {catalog_parquet_path}")
-        print("Run process_catalog_to_table.py first to create the catalog parquet file.")
+        print("Run process_catalog_to_parquet.py first to create the catalog parquet file.")
         return
     
     # Ensure output directory exists
@@ -287,7 +318,7 @@ def main():
     start_time = time.time()
     
     try:
-        process_catalog_to_geoparquet(
+        process_catalog_to_csv(
             catalog_parquet_path=catalog_parquet_path,
             output_dir=output_dir,
             bucket="nz-imagery"  # Could make this configurable

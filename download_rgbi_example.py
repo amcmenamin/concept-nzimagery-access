@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime
+import setup_gdal_env  # Configure GDAL environment
 from osgeo import gdal
 
 gdal.SetConfigOption('AWS_REGION', 'ap-southeast-2')

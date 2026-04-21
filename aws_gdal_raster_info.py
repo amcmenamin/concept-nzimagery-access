@@ -44,6 +44,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
+import setup_gdal_env  # Configure GDAL environment
+
 try:
 	from osgeo import gdal
 	HAS_GDAL_PYTHON = True

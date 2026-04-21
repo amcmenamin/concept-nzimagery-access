@@ -1,3 +1,4 @@
+import setup_gdal_env  # Configure GDAL environment
 from osgeo import gdal
 import os
 import time

@@ -19,7 +19,7 @@ import argparse
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-
+import setup_gdal_env  # Configure GDAL environment
 import rasterio
 from rasterio.session import AWSSession
 from rasterio.windows import from_bounds

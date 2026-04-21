@@ -1,4 +1,5 @@
 import os
+import setup_gdal_env  # Configure GDAL environment
 import numpy as np
 import rasterio
 import cv2

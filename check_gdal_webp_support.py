@@ -1,4 +1,5 @@
 
+import setup_gdal_env  # Configure GDAL environment
 from osgeo import gdal
 print(gdal.VersionInfo("LIBS"))
 

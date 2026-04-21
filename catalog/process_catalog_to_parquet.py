@@ -50,8 +50,20 @@ def extract_href_components(href: str) -> Dict[str, str]:
     
     if len(parts) < 3:
         # Handle cases where the structure might be different
+        region = parts[0].replace('-', ' ') if len(parts) > 0 else ''
+        sub_region = ''
+        if len(parts) > 1:
+            second_part = parts[1]
+            underscore_pos = second_part.find('_')
+            if underscore_pos != -1:
+                sub_region = second_part[:underscore_pos].replace('-', ' ')
+            else:
+                sub_region = second_part.replace('-', ' ')
+        
         return {
             'path': clean_path,
+            'region': region,
+            'sub_region': sub_region,
             'type': '',
             'crs': '',
             'base_year': '',
@@ -66,6 +78,19 @@ def extract_href_components(href: str) -> Dict[str, str]:
     path_components = '/'.join(parts[:-2])  # Everything except type and crs
     data_type = parts[-2] if len(parts) >= 2 else ''
     crs = parts[-1] if len(parts) >= 1 else ''
+    
+    # Extract region from the first part of the path (left of first /)
+    region = parts[0].replace('-', ' ') if len(parts) > 0 else ''
+    
+    # Extract sub_region from the second part of the path (after first / to first _)
+    sub_region = ''
+    if len(parts) > 1:
+        second_part = parts[1]
+        underscore_pos = second_part.find('_')
+        if underscore_pos != -1:
+            sub_region = second_part[:underscore_pos].replace('-', ' ')
+        else:
+            sub_region = second_part.replace('-', ' ')
     
     # Extract year and GSD from the path
     # Look for pattern like location_year_gsdm
@@ -99,6 +124,8 @@ def extract_href_components(href: str) -> Dict[str, str]:
     
     return {
         'path': path_components,
+        'region': region,
+        'sub_region': sub_region,
         'type': data_type,
         'crs': crs,
         'base_year': base_year,
