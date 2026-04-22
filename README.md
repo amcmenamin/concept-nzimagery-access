@@ -10,11 +10,17 @@ ArcGIS Pro - https://storymaps.arcgis.com/collections/e6d212054d9744f399fcbed00a
 Other tools / approaches - https://github.com/linz/imagery/blob/master/docs/usage.md
 
 
-## Creating chips
+## Creating chips - other code examples
 
 A modern approach to creating chips: see: https://github.com/Clay-foundation/stacchip/
 
 NZ Example: https://github.com/Clay-foundation/stacchip/blob/main/stacchip/processors/linz_processor.py
+
+## Creating a stacpg version
+
+https://github.com/vincentsarago/MAXAR_opendata_to_pgstac
+
+NZ Imagery - https://github.com/vincentsarago/MAXAR_opendata_to_pgstac/tree/main/Linz
 
 ## Find the collection of tiff images to use has several approaches
 
