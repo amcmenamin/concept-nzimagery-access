@@ -1,8 +1,8 @@
-import setup_gdal_env  # Configure GDAL environment
-from osgeo import gdal
 import os
 import time
 from datetime import datetime
+from osgeo import gdal
+
 
 # =============================================================================
 # CONFIGURATION: Choose PUBLIC or PRIVATE S3 access

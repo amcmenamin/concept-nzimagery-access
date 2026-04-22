@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import setup_gdal_env  # This will configure the environment for GDAL
 from pathlib import Path
 from osgeo import gdal
 
