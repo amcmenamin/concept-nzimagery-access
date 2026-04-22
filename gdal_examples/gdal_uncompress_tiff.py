@@ -1,3 +1,4 @@
+import setup_gdal_env  # Configure GDAL environment
 from osgeo import gdal
 import os
 from pathlib import Path
@@ -50,4 +51,3 @@ if __name__ == "__main__":
     output_folder = r"C:\Data\imagery\uncompressed"
 
     process_folder(input_folder, output_folder)
-

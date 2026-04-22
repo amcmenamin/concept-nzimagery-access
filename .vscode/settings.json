@@ -1,10 +1,14 @@
 {
-    "python.defaultInterpreterPath": "C:\\Program Files\\QGIS 3.44.6\\apps\\Python312\\python.exe",
+    "python.defaultInterpreterPath": "c:\\Program Files\\ArcGIS\\Pro\\bin\\Python\\envs\\arcgispro-py3\\python.exe",
     "terminal.integrated.env.windows": {
-        "PATH": "C:\\Program Files\\QGIS 3.44.6\\bin;C:\\Program Files\\QGIS 3.44.6\\apps\\Python312;C:\\Program Files\\QGIS 3.44.6\\apps\\Python312\\Scripts;${env:PATH}",
+        "PATH": "C:\\Users\\AMcMenamin\\AppData\\Local\\miniconda3;C:\\Users\\AMcMenamin\\AppData\\Local\\miniconda3\\Scripts;C:\\Users\\AMcMenamin\\AppData\\Local\\miniconda3\\Library\\bin;C:\\Users\\AMcMenamin\\AppData\\Local\\miniconda3\\condabin;C:\\Users\\AMcMenamin\\AppData\\Local\\Programs\\OSGeo4W\\bin;C:\\Users\\AMcMenamin\\AppData\\Local\\Programs\\OSGeo4W\\apps\\Python312;C:\\Users\\AMcMenamin\\AppData\\Local\\Programs\\OSGeo4W\\apps\\Python312\\Scripts;C:\\Users\\AMcMenamin\\AppData\\Local\\Programs\\OSGeo4W\\apps\\qgis-dev\\bin;C:\\Users\\AMcMenamin\\AppData\\Local\\Programs\\OSGeo4W\\apps\\gdal-dev\\bin;${env:PATH}",
+        "CONDA_EXE": "C:\\Users\\AMcMenamin\\AppData\\Local\\miniconda3\\Scripts\\conda.exe",
+        "CONDA_PREFIX": "C:\\Users\\AMcMenamin\\AppData\\Local\\miniconda3",
+        "CONDA_DEFAULT_ENV": "base",
         "GDAL_FILENAME_IS_UTF8": "YES",
         "VSI_CACHE": "TRUE",
         "VSI_CACHE_SIZE": "1000000"
     },
-    "python-envs.defaultEnvManager": "ms-python.python:system"
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda"
 }

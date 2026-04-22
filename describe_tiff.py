@@ -1,10 +1,11 @@
-"""Describe TIFF/COG properties using GDAL.
-"""
+"""Describe TIFF/COG properties using GDAL."""
+
 from __future__ import annotations
 
-import setup_gdal_env # This will configure the environment for GDAL
+import setup_gdal_env  # This will configure the environment for GDAL
 from pathlib import Path
 from osgeo import gdal
+
 
 def describe_tiff(path: str, results_file: str = "") -> None:
     tiff_path = Path(path)
@@ -18,12 +19,12 @@ def describe_tiff(path: str, results_file: str = "") -> None:
     # Helper function to print and optionally write to file
     file_handle = None
     if results_file:
-        file_handle = open(results_file, 'w', encoding='utf-8')
-    
+        file_handle = open(results_file, "w", encoding="utf-8")
+
     def print_and_write(text: str) -> None:
         print(text)
         if file_handle:
-            file_handle.write(text + '\n')
+            file_handle.write(text + "\n")
 
     try:
         driver = ds.GetDriver()
@@ -49,7 +50,9 @@ def describe_tiff(path: str, results_file: str = "") -> None:
 
             dtypes.append(gdal.GetDataTypeName(band.DataType))
             nodata_values.append(band.GetNoDataValue())
-            color_interpretation.append(gdal.GetColorInterpretationName(band.GetColorInterpretation()))
+            color_interpretation.append(
+                gdal.GetColorInterpretationName(band.GetColorInterpretation())
+            )
             block_shapes.append(band.GetBlockSize())
 
             overview_count = band.GetOverviewCount()
@@ -60,7 +63,9 @@ def describe_tiff(path: str, results_file: str = "") -> None:
                     if overview is None or overview.XSize == 0:
                         continue
                     factors.append(max(1, round(ds.RasterXSize / overview.XSize)))
-                print_and_write(f"Band {band_index}: {factors if factors else overview_count}")
+                print_and_write(
+                    f"Band {band_index}: {factors if factors else overview_count}"
+                )
             else:
                 print_and_write(f"Band {band_index}: none")
 
@@ -101,7 +106,7 @@ def describe_tiff(path: str, results_file: str = "") -> None:
             print_and_write("\n=== Dataset Tags ===")
             for key in sorted(tags):
                 print_and_write(f"{key}: {tags[key]}")
-        
+
         if file_handle:
             print_and_write(f"\n✅ Results also written to: {results_file}")
     finally:

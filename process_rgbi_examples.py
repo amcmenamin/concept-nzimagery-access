@@ -1,4 +1,5 @@
 import os
+import setup_gdal_env  # Configure GDAL environment
 import numpy as np
 import rasterio
 import cv2
@@ -10,26 +11,25 @@ from osgeo import gdal
 from scipy.ndimage import convolve
 
 
-
 class NDVIProcessor:
     """
     A comprehensive processor for analyzing multispectral imagery and extracting vegetation,
     water, and urban features using various spectral indices and height information.
-    
+
     This class provides functionality to:
     - Process RGBI (Red, Green, Blue, Infrared) imagery
     - Calculate vegetation indices (NDVI, NDWI)
     - Perform height-based classification using DSM/DEM data
     - Extract vegetation, water, and urban features
     - Generate classification masks and export results
-    
+
     The processor supports both height-aware and height-independent classification,
     with optional debug outputs for intermediate processing steps.
-    
+
     Attributes:
         use_height (bool): Whether to incorporate height information from DSM/DEM data
         in_debug_mode (bool): Whether to save intermediate processing outputs for debugging
-    
+
     Example:
         >>> processor = NDVIProcessor()
         >>> processor.set_height_usage(True)
@@ -41,10 +41,11 @@ class NDVIProcessor:
         ...     rgbi, transform, dsm, dtm, output_path, height_tolerance=3.5
         ... )
     """
+
     def __init__(self):
         """
         Initialize the NDVIProcessor with default settings.
-        
+
         The processor is initialized with height usage enabled and debug mode disabled.
         These settings can be modified using the respective setter methods.
         """
@@ -69,10 +70,15 @@ class NDVIProcessor:
         """
         self.in_debug_mode = debug_mode
 
-    def read_raster_datasets(self, rgbi_path: str, dsm_path: str, dem_path: str, resize_rgbi_base: bool = True
+    def read_raster_datasets(
+        self,
+        rgbi_path: str,
+        dsm_path: str,
+        dem_path: str,
+        resize_rgbi_base: bool = True,
     ) -> tuple[np.ndarray, np.ndarray | None, np.ndarray | None, rasterio.Affine]:
         """
-        Reads RGBI, DSM, and DTM raster files, crops DSM and DTM to RGBI bounds, 
+        Reads RGBI, DSM, and DTM raster files, crops DSM and DTM to RGBI bounds,
         resizes DSM and DTM to match RGBI shape, and returns the arrays and transform.
 
         Args:
@@ -91,17 +97,16 @@ class NDVIProcessor:
         rgbi, transform, bounds = self.read_rgbi(rgbi_path)
         if self.use_height:
             dsm = self.read_dsm(dsm_path, bounds)
-            # Check the DSM, DEM are the same cell size 
+            # Check the DSM, DEM are the same cell size
             if resize_rgbi_base:
-                dsm = resize(dsm, rgbi[:1,:,:].shape)
+                dsm = resize(dsm, rgbi[:1, :, :].shape)
             else:
                 rgbi = resize(rgbi, dsm.shape, preserve_range=True)
 
-
             dtm, _ = self.read_dem(dem_path, bounds)
             if resize_rgbi_base:
-                dtm = resize(dtm, rgbi[:1,:,:].shape)
-            else:   #rework this
+                dtm = resize(dtm, rgbi[:1, :, :].shape)
+            else:  # rework this
                 rgbi = resize(rgbi, dtm.shape, preserve_range=True)
         else:
             dsm = None
@@ -144,7 +149,9 @@ class NDVIProcessor:
         else:
             with rasterio.open(dsm_path, "r") as dsm_f:
                 dsm = dsm_f.read(
-                    window=rasterio.windows.from_bounds(*bounds, transform=dsm_f.transform)
+                    window=rasterio.windows.from_bounds(
+                        *bounds, transform=dsm_f.transform
+                    )
                 ).astype(np.float32)
         return dsm
 
@@ -167,7 +174,9 @@ class NDVIProcessor:
         else:
             with rasterio.open(dem_path, "r") as dem_f:
                 dem = dem_f.read(
-                    window=rasterio.windows.from_bounds(*bounds, transform=dem_f.transform)
+                    window=rasterio.windows.from_bounds(
+                        *bounds, transform=dem_f.transform
+                    )
                 ).astype(np.float32)
         return dem, transform
 
@@ -182,10 +191,10 @@ class NDVIProcessor:
         Returns:
             np.ndarray: nDSM array with negative values set to 0.
         """
-        ndsm = (dsm[0] - dem[0])
+        ndsm = dsm[0] - dem[0]
         # Set negative values to 0. Possible if the DEM is higher than the DSM.
         # TODO: May want to use local value to get average
-        ndsm[ndsm < 0] = 0  
+        ndsm[ndsm < 0] = 0
         return ndsm
 
     def calculate_slope(self, dem, out_path, transform):
@@ -201,24 +210,17 @@ class NDVIProcessor:
         cellsize_y = -transform.e  # usually negative
 
         # Horn's method kernels
-        kernel_x = np.array([[-1, 0, 1],
-                            [-2, 0, 2],
-                            [-1, 0, 1]]) / (8 * cellsize_x)
+        kernel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]) / (8 * cellsize_x)
 
-        kernel_y = np.array([[ 1,  2,  1],
-                            [ 0,  0,  0],
-                            [-1, -2, -1]]) / (8 * cellsize_y)
+        kernel_y = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]]) / (8 * cellsize_y)
 
         # Compute gradients
-        dzdx = convolve(dem, kernel_x, mode='nearest')
-        dzdy = convolve(dem, kernel_y, mode='nearest')
+        dzdx = convolve(dem, kernel_x, mode="nearest")
+        dzdy = convolve(dem, kernel_y, mode="nearest")
 
         # Compute slope in degrees
         slope_rad = np.arctan(np.sqrt(dzdx**2 + dzdy**2))
         slope_deg = np.degrees(slope_rad)
-
-
-
 
         x_grad, y_grad = np.gradient(dem)
         slope = np.sqrt(x_grad**2 + y_grad**2)
@@ -230,29 +232,35 @@ class NDVIProcessor:
         classification = np.where(flat, 0, 1)
 
         # Save the slope raster
-        with rasterio.open(out_path, 'w', driver='GTiff', height=classification.shape[0],
-                           width=classification.shape[1], count=1, dtype=np.float32,
-                           transform=dem.transform) as dst:
+        with rasterio.open(
+            out_path,
+            "w",
+            driver="GTiff",
+            height=classification.shape[0],
+            width=classification.shape[1],
+            count=1,
+            dtype=np.float32,
+            transform=dem.transform,
+        ) as dst:
             dst.write(classification, 1)
 
-
-    def process_slope(self, input_dem_path, output_slope_path, slope_format='degrees'):
+    def process_slope(self, input_dem_path, output_slope_path, slope_format="degrees"):
         """
         Process a DEM to calculate slope using GDAL's DEMProcessing functionality.
-        
+
         This method uses GDAL's built-in slope calculation algorithm to generate
         slope rasters from digital elevation models. The output format can be
         specified as degrees, percent, or rise over run.
-        
+
         Args:
             input_dem_path (str): Path to the input DEM raster file
             output_slope_path (str): Path where the output slope raster will be saved
             slope_format (str, optional): Output format - 'degrees', 'percent', or 'rise_run'.
                                         Defaults to 'degrees'.
-        
+
         Returns:
             None
-            
+
         Raises:
             Exception: If DEM file cannot be opened or processing fails
         """
@@ -265,14 +273,14 @@ class NDVIProcessor:
                 return
 
             # Define options for DEMProcessing
-            options = ['slope']
-            if slope_format == 'percent':
-                options.append('-p')
-            elif slope_format == 'rise_run':
-                options.append('-s')
+            options = ["slope"]
+            if slope_format == "percent":
+                options.append("-p")
+            elif slope_format == "rise_run":
+                options.append("-s")
 
             # Perform the DEM processing to calculate slope
-            gdal.DEMProcessing(output_slope_path, dem_ds, 'slope', options=options)
+            gdal.DEMProcessing(output_slope_path, dem_ds, "slope", options=options)
 
             print(f"Slope calculated and saved to: {output_slope_path}")
 
@@ -280,23 +288,29 @@ class NDVIProcessor:
             print(f"An error occurred: {e}")
         finally:
             # Close the dataset (important for releasing file locks)
-            if 'dem_ds' in locals() and dem_ds is not None:
+            if "dem_ds" in locals() and dem_ds is not None:
                 dem_ds = None
 
-
-
-
-    def process_general(self, rgbi, transform, dsm, dem, output_path, 
-                        height_tolerance=3.5, max_height=None, 
-                        greater_than=True, index_value=0.3,
-                        mode='ndvi'):
+    def process_general(
+        self,
+        rgbi,
+        transform,
+        dsm,
+        dem,
+        output_path,
+        height_tolerance=3.5,
+        max_height=None,
+        greater_than=True,
+        index_value=0.3,
+        mode="ndvi",
+    ):
         """
         General processing method for extracting features using spectral indices and height data.
-        
+
         This flexible method can process either NDVI or NDWI indices and apply height-based
         filtering to extract specific features. Supports both vegetation and water extraction
         depending on the mode and threshold settings.
-        
+
         Args:
             rgbi (np.ndarray): Multi-band image array (Red, Green, Blue, Infrared)
             transform (rasterio.Affine): Affine transformation for georeferencing
@@ -311,80 +325,128 @@ class NDVIProcessor:
             index_value (float, optional): Threshold value for spectral index classification.
                                          Defaults to 0.3.
             mode (str, optional): Spectral index mode - 'ndvi' or 'ndwi'. Defaults to 'ndvi'.
-        
+
         Returns:
             None
         """
-        
+
         # Ensure output directory exists
         output_dir = os.path.dirname(output_path)
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
 
         print("Processing indexes...")
-        if mode == 'ndvi':
+        if mode == "ndvi":
             ndvi = self.calculate_ndvi(rgbi)
-        elif mode == 'ndwi':
+        elif mode == "ndwi":
             ndvi = self.calculate_ndwi(rgbi)
 
         if self.in_debug_mode:
-            temp_path = output_path.replace('.tif', f'_{mode}.tif')
-            with rasterio.open(temp_path, 'w', driver='GTiff', height=ndvi.shape[0],
-                                width=ndvi.shape[1], count=1, dtype=np.float32,
-                                transform=transform) as dst:
+            temp_path = output_path.replace(".tif", f"_{mode}.tif")
+            with rasterio.open(
+                temp_path,
+                "w",
+                driver="GTiff",
+                height=ndvi.shape[0],
+                width=ndvi.shape[1],
+                count=1,
+                dtype=np.float32,
+                transform=transform,
+            ) as dst:
                 dst.write(ndvi, 1)
 
         if self.use_height:
             print("Processing ndsm...")
             ndsm = self.calculate_ndsm(dsm, dem)
             if self.in_debug_mode:
-                temp_path = output_path.replace('.tif', '_ndsm.tif')
-                with rasterio.open(temp_path, 'w', driver='GTiff', height=ndsm.shape[0],
-                                    width=ndsm.shape[1], count=1, dtype=np.float32,
-                                    transform=transform) as dst:
+                temp_path = output_path.replace(".tif", "_ndsm.tif")
+                with rasterio.open(
+                    temp_path,
+                    "w",
+                    driver="GTiff",
+                    height=ndsm.shape[0],
+                    width=ndsm.shape[1],
+                    count=1,
+                    dtype=np.float32,
+                    transform=transform,
+                ) as dst:
                     dst.write(ndsm, 1)
 
         print("Processing classification...")
-        classified_data = self.classify(ndvi, greater_than=greater_than, ndvi_value=index_value)
+        classified_data = self.classify(
+            ndvi, greater_than=greater_than, ndvi_value=index_value
+        )
         if self.in_debug_mode:
-            temp_path = output_path.replace('.tif', '_classified.tif')
-            with rasterio.open(temp_path, 'w', driver='GTiff', height=classified_data.shape[0],
-                                width=classified_data.shape[1], count=1, dtype=np.float32,
-                                transform=transform) as dst:
+            temp_path = output_path.replace(".tif", "_classified.tif")
+            with rasterio.open(
+                temp_path,
+                "w",
+                driver="GTiff",
+                height=classified_data.shape[0],
+                width=classified_data.shape[1],
+                count=1,
+                dtype=np.float32,
+                transform=transform,
+            ) as dst:
                 dst.write(classified_data.astype(np.float32), 1)
 
         if self.use_height:
             print("Processing height...")
-            heighted_data = self.select_by_height(classified_data, ndsm, height_tolerance, max_height)
+            heighted_data = self.select_by_height(
+                classified_data, ndsm, height_tolerance, max_height
+            )
             heighted_data = np.where(heighted_data, 1, 0)
         else:
             heighted_data = classified_data
-            
-        with rasterio.open(output_path, 'w', driver='GTiff', height=heighted_data.shape[0],
-                            width=heighted_data.shape[1], count=1, dtype=np.float32,
-                            transform=transform) as dst:
+
+        with rasterio.open(
+            output_path,
+            "w",
+            driver="GTiff",
+            height=heighted_data.shape[0],
+            width=heighted_data.shape[1],
+            count=1,
+            dtype=np.float32,
+            transform=transform,
+        ) as dst:
             dst.write(heighted_data, 1)
-        
+
         print(output_path, "created")
 
     def export_image(self, image, output_path, transform):
         """
         Export a multi-band image array to a GeoTIFF file.
-        
+
         Args:
             image (np.ndarray): Multi-band image array to export
             output_path (str): Path to save the output GeoTIFF file
             transform (rasterio.Affine): Affine transformation for georeferencing
-        
+
         Returns:
             None
         """
-        with rasterio.open(output_path, 'w', driver='GTiff', height=image.shape[0],
-                           width=image.shape[1], count=3, dtype=np.float32,
-                           transform=transform) as dst:
+        with rasterio.open(
+            output_path,
+            "w",
+            driver="GTiff",
+            height=image.shape[0],
+            width=image.shape[1],
+            count=3,
+            dtype=np.float32,
+            transform=transform,
+        ) as dst:
             dst.write(image, 3)
 
-    def process_vegetation(self, rgbi, transform, dsm, dem, output_path, height_tolerance=3.5, max_height=None):
+    def process_vegetation(
+        self,
+        rgbi,
+        transform,
+        dsm,
+        dem,
+        output_path,
+        height_tolerance=3.5,
+        max_height=None,
+    ):
         """
         Classifies vegetation over a set height from image and exports a raster mask.
 
@@ -404,42 +466,61 @@ class NDVIProcessor:
             None
 
         """
-        
+
         ndvi = self.calculate_ndvi(rgbi)
         if self.in_debug_mode:
-            temp_path = output_path.replace('.tif', '_ndvi.tif')
-            with rasterio.open(temp_path, 'w', driver='GTiff', height=ndvi.shape[0],
-                                width=ndvi.shape[1], count=1, dtype=np.float32,
-                                transform=transform) as dst:
+            temp_path = output_path.replace(".tif", "_ndvi.tif")
+            with rasterio.open(
+                temp_path,
+                "w",
+                driver="GTiff",
+                height=ndvi.shape[0],
+                width=ndvi.shape[1],
+                count=1,
+                dtype=np.float32,
+                transform=transform,
+            ) as dst:
                 dst.write(ndvi, 1)
 
-        
         ndsm = self.calculate_ndsm(dsm, dem)
         if self.in_debug_mode:
-            temp_path = output_path.replace('.tif', '_ndsm.tif')
-            with rasterio.open(temp_path, 'w', driver='GTiff', height=ndsm.shape[0],
-                                width=ndsm.shape[1], count=1, dtype=np.float32,
-                                transform=transform) as dst:
+            temp_path = output_path.replace(".tif", "_ndsm.tif")
+            with rasterio.open(
+                temp_path,
+                "w",
+                driver="GTiff",
+                height=ndsm.shape[0],
+                width=ndsm.shape[1],
+                count=1,
+                dtype=np.float32,
+                transform=transform,
+            ) as dst:
                 dst.write(ndsm, 1)
 
-
         vegetation = self.classify_vegetation(ndvi)
-        heighted_vegetation = self.select_by_height(vegetation, ndsm, height_tolerance, max_height)
+        heighted_vegetation = self.select_by_height(
+            vegetation, ndsm, height_tolerance, max_height
+        )
         heighted_vegetation = np.where(heighted_vegetation, 1, 0)
-        with rasterio.open(output_path, 'w', driver='GTiff', height=heighted_vegetation.shape[0],
-                            width=heighted_vegetation.shape[1], count=1, dtype=np.float32,
-                            transform=transform) as dst:
+        with rasterio.open(
+            output_path,
+            "w",
+            driver="GTiff",
+            height=heighted_vegetation.shape[0],
+            width=heighted_vegetation.shape[1],
+            count=1,
+            dtype=np.float32,
+            transform=transform,
+        ) as dst:
             dst.write(heighted_vegetation, 1)
-        
+
         print(output_path, "created")
-        #filler = RasterHoleFiller(r"C:\Data\imagery_rgbi_woolpert\PRJ47237_Tauranga\Vegetation\method2a\RGBI_BD37_2025_1000_2619_vegetation_3.5m.tif")
-        #filler.fill_holes()
-        #filler.close()
-        #filler.trim_edges()
+        # filler = RasterHoleFiller(r"C:\Data\imagery_rgbi_woolpert\PRJ47237_Tauranga\Vegetation\method2a\RGBI_BD37_2025_1000_2619_vegetation_3.5m.tif")
+        # filler.fill_holes()
+        # filler.close()
+        # filler.trim_edges()
 
-        
         return
-
 
     def calculate_ndvi(self, rgbi):
         """
@@ -463,7 +544,7 @@ class NDVIProcessor:
         """
         ndvi = (rgbi[3] - rgbi[0]) / (rgbi[3] + rgbi[0])
         return ndvi
-    
+
     def calculate_ndwi(self, rgbi):
         """
         Calculates the Normalized Difference Water Index (NDWI) from an RGBA image array.
@@ -481,22 +562,22 @@ class NDVIProcessor:
         """
         ndwi = (rgbi[1] - rgbi[3]) / (rgbi[1] + rgbi[3])
         return ndwi
-    
+
     def calculate_brightness_index(self, rgbi):
         """
         Calculate the Brightness Index (BI) from an RGBI image array.
-        
+
         The Brightness Index is calculated as the square root of the sum of squared
         RGB values, providing a measure of overall pixel brightness.
         Formula: BI = sqrt(Red² + Green² + Blue²)
-        
+
         Args:
             rgbi (np.ndarray): A 4-channel image array (Red, Green, Blue, Infrared)
-        
+
         Returns:
             np.ndarray: The computed Brightness Index values as a float array
         """
-        
+
         RED = rgbi[0]
         GREEN = rgbi[1]
         BLUE = rgbi[2]
@@ -542,12 +623,11 @@ class NDVIProcessor:
         threshold = (ndvi < ndvi_threshold) & (bi > bi_threshold)
         return threshold.astype(np.uint8)
 
-
     def classify_vegetation(self, ndvi):
         """
         Classifies vegetation presence in an NDVI (Normalized Difference Vegetation Index) array based on a computed threshold.
 
-        This method replaces NaN values in the input NDVI array with -1, set a vegetation identification value 0.3, 
+        This method replaces NaN values in the input NDVI array with -1, set a vegetation identification value 0.3,
         and then classifies each pixel as vegetation or non-vegetation by comparing the NDVI value to the identification value.
 
         Args:
@@ -560,7 +640,7 @@ class NDVIProcessor:
         References:
             - [Normalized Difference Vegetation Index (NDVI) - USGS](https://www.usgs.gov/landsat-missions/landsat-normalized-difference-vegetation-index)
             - [Remote Sensing of Environment: NDVI](https://www.sciencedirect.com/topics/earth-and-planetary-sciences/normalized-difference-vegetation-index)
-        
+
         NDVI value ranges:
         - Healthy vegetation: 0.5 to 0.8+
         - Moderate vegetation: 0.3 to 0.5
@@ -574,7 +654,7 @@ class NDVIProcessor:
         """
         Classifies vegetation presence in an NDVI (Normalized Difference Vegetation Index) array based on a computed threshold.
 
-        This method replaces NaN values in the input NDVI array with -1, set a vegetation identification value 0.3, 
+        This method replaces NaN values in the input NDVI array with -1, set a vegetation identification value 0.3,
         and then classifies each pixel as vegetation or non-vegetation by comparing the NDVI value to the identification value.
 
         Args:
@@ -587,7 +667,7 @@ class NDVIProcessor:
         References:
             - [Normalized Difference Vegetation Index (NDVI) - USGS](https://www.usgs.gov/landsat-missions/landsat-normalized-difference-vegetation-index)
             - [Remote Sensing of Environment: NDVI](https://www.sciencedirect.com/topics/earth-and-planetary-sciences/normalized-difference-vegetation-index)
-        
+
         NDVI value ranges:
         - Healthy vegetation: 0.5 to 0.8+
         - Moderate vegetation: 0.3 to 0.5
@@ -642,45 +722,59 @@ class NDVIProcessor:
         else:
             height_vegetation = data & (ndsm >= height_threshold)
 
-        height_vegetation = binary_closing(height_vegetation, structure=np.ones((3, 3))).astype(height_vegetation.dtype)
+        height_vegetation = binary_closing(
+            height_vegetation, structure=np.ones((3, 3))
+        ).astype(height_vegetation.dtype)
         return height_vegetation
-    
+
     def fill_holes(self, heighted_vegetation):
         """
         Fill holes in a binary vegetation mask using GDAL's FillNodata function.
-        
+
         This method uses GDAL's interpolation algorithm to fill small gaps and holes
         in vegetation classification results, which is more effective than simple
         morphological operations for larger gaps.
-        
+
         Args:
             heighted_vegetation (np.ndarray): Binary vegetation mask with holes to fill
-        
+
         Returns:
             gdal.Band: GDAL raster band object with filled holes
-            
+
         Note:
             The method uses a maximum search distance of 10 pixels and 1 smoothing
             iteration. Adjust these parameters based on the size of holes to fill.
         """
 
-        nodata_value = 0 
+        nodata_value = 0
         mask_array = (heighted_vegetation != nodata_value).astype(np.uint8)
 
         # Create an in-memory raster mask using GDAL MEM driver
-        mem_driver = gdal.GetDriverByName('MEM')
-        mask_ds = mem_driver.Create('', heighted_vegetation.shape[1], heighted_vegetation.shape[0], 1, gdal.GDT_Byte)
+        mem_driver = gdal.GetDriverByName("MEM")
+        mask_ds = mem_driver.Create(
+            "",
+            heighted_vegetation.shape[1],
+            heighted_vegetation.shape[0],
+            1,
+            gdal.GDT_Byte,
+        )
         mask_ds.GetRasterBand(1).WriteArray(mask_array)
         mask_band = mask_ds.GetRasterBand(1)
 
         # Convert the numpy array to a GDAL raster band
-        band_driver = gdal.GetDriverByName('MEM')
-        band_ds = band_driver.Create('', heighted_vegetation.shape[1], heighted_vegetation.shape[0], 1, gdal.GDT_Float32)
+        band_driver = gdal.GetDriverByName("MEM")
+        band_ds = band_driver.Create(
+            "",
+            heighted_vegetation.shape[1],
+            heighted_vegetation.shape[0],
+            1,
+            gdal.GDT_Float32,
+        )
         band_ds.GetRasterBand(1).WriteArray(heighted_vegetation)
         band = band_ds.GetRasterBand(1)
 
         # Using gdal method as it work better than binary_closing - Fill nodata values
-        gdal.FillNodata(band, mask_band, maxSearchDist=10, smoothingIterations=1, options=[])
+        gdal.FillNodata(
+            band, mask_band, maxSearchDist=10, smoothingIterations=1, options=[]
+        )
         return band
-
-    
