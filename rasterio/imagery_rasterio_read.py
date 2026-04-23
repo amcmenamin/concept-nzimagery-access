@@ -19,7 +19,6 @@ import argparse
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-import setup_gdal_env  # Configure GDAL environment
 import rasterio
 from rasterio.session import AWSSession
 from rasterio.windows import from_bounds
@@ -41,7 +40,8 @@ LINZ_DATASETS: dict[str, DatasetInfo] = {
 
 def build_s3_url(bucket: str, path: str) -> str:
     """Build S3 URL for rasterio access."""
-    return f"s3://{bucket}/{path}"
+    return f"https://s3.ap-southeast-2.amazonaws.com/{bucket}/{path}"
+
 
 
 def setup_aws_session() -> AWSSession:

@@ -23,9 +23,10 @@ def example_metadata_only():
     # Set up AWS session for unsigned access to public data
     session = setup_aws_session()
 
-    # Access the Taranaki imagery file
+    # Access the Waikato imagery file
     dataset = LINZ_DATASETS["imagery"]
-    path = "taranaki/taranaki_2022-2023_0.1m/rgb/2193/BQ31_10000_0101.tiff"
+    # path = "taranaki/taranaki_2022-2023_0.1m/rgb/2193/BQ31_10000_0101.tiff"
+    path = "waikato/waikato_2023-2024_0.3m/rgbnir/2193/AZ34_10000_0201.tiff"
     s3_url = build_s3_url(dataset.bucket, path)
 
     print(f"Reading metadata from: {s3_url}")
@@ -52,12 +53,12 @@ def example_region_extract():
 
     session = setup_aws_session()
     dataset = LINZ_DATASETS["imagery"]
-    path = "taranaki/taranaki_2022-2023_0.1m/rgb/2193/BQ31_10000_0101.tiff"
+    path = "waikato/waikato_2023-2024_0.3m/rgbnir/2193/AZ34_10000_0201.tiff"
     s3_url = build_s3_url(dataset.bucket, path)
 
-    # Define a bounding box (adjust these coordinates to fit your data)
-    # These are example coordinates - adjust based on actual image bounds
-    bbox = (1735000, 5650000, 1736000, 5651000)  # minx, miny, maxx, maxy in image CRS
+    # Bounding box chosen within this tile's extent:
+    # left=1804000.0, bottom=5967600.0, right=1808800.0, top=5974800.0
+    bbox = (1805000, 5969000, 1806000, 5970000)  # minx, miny, maxx, maxy in image CRS
 
     print(f"📦 Extracting region: {bbox}")
     print(f"🌐 From: {s3_url}")
@@ -70,7 +71,7 @@ def example_region_extract():
     print(f"📈 Mean value: {data.mean():.2f}")
 
     # Save the extracted region
-    output_path = "c:\\data\\imagery\\taranaki_region_extract.tiff"
+    output_path = "c:\\data\\imagery\\waikato_region_extract.tiff"
     save_raster(data, metadata, output_path)
     print(f"💾 Saved extract to: {output_path}")
 
@@ -83,11 +84,11 @@ def example_overview_access():
 
     session = setup_aws_session()
     dataset = LINZ_DATASETS["imagery"]
-    path = "taranaki/taranaki_2022-2023_0.1m/rgb/2193/BQ31_10000_0101.tiff"
+    path = "waikato/waikato_2023-2024_0.3m/rgbnir/2193/AZ34_10000_0201.tiff"
     s3_url = build_s3_url(dataset.bucket, path)
 
     # Read at different overview levels
-    overview_levels = [0, 1, 2]  # 0=full resolution, 1+=overview levels
+    overview_levels = [1, 2]  # 1+=overview levels; skip full-res for faster demo
 
     for level in overview_levels:
         print(f"\n🔍 Reading at overview level {level}:")
@@ -102,7 +103,7 @@ def example_overview_access():
             print(f"   💽 Memory usage: ~{data.nbytes / 1024 / 1024:.1f} MB")
 
             # Save the overview
-            output_path = f"c:\\data\\imagery\\taranaki_overview_{level}.tiff"
+            output_path = f"c:\\data\\imagery\\waikato_overview_{level}.tiff"
             save_raster(data, metadata, output_path)
             print(f"   💾 Saved to: {output_path}")
 
@@ -115,7 +116,7 @@ def example_list_available_files():
     print("\n=== File Listing Example ===")
 
     dataset = LINZ_DATASETS["imagery"]
-    prefix = "taranaki/taranaki_2022-2023_0.1m/rgb/2193/"
+    prefix = "waikato/waikato_2023-2024_0.3m/rgbnir/2193/"
 
     print(f"📂 Listing files in: s3://{dataset.bucket}/{prefix}")
 
@@ -123,7 +124,7 @@ def example_list_available_files():
     objects = list_s3_objects(dataset.bucket, prefix, dataset.region)
 
     # Filter for raster files
-    raster_files = [obj for obj in objects if obj.lower().endswith((".tiff", ".tifff"))]
+    raster_files = [obj for obj in objects if obj.lower().endswith((".tiff", ".tif"))]
 
     print(f"🗂️  Found {len(raster_files)} raster files:")
 
@@ -144,7 +145,7 @@ def example_batch_processing():
 
     session = setup_aws_session()
     dataset = LINZ_DATASETS["imagery"]
-    prefix = "taranaki/taranaki_2022-2023_0.1m/rgb/2193/"
+    prefix = "waikato/waikato_2023-2024_0.3m/rgbnir/2193/"
 
     # Get list of files
     objects = list_s3_objects(dataset.bucket, prefix, dataset.region)
@@ -217,5 +218,4 @@ if __name__ == "__main__":
 
     except Exception as e:
         print(f"\n❌ Error: {e}")
-        print("\nMake sure you have required dependencies:")
-        print("   pip install rasterio boto3")
+
