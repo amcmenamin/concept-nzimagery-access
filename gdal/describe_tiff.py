@@ -2,8 +2,37 @@
 
 from __future__ import annotations
 
+import os
+import sys
+from dotenv import load_dotenv
 from pathlib import Path
-from osgeo import gdal
+
+load_dotenv(override=False)
+
+# Ensure key GDAL/PROJ settings from .env are present for this process.
+for env_name in ("GDAL_DATA", "PROJ_LIB", "OSGEO4W_ROOT", "PYTHONPATH", "PATH"):
+    env_value = os.getenv(env_name)
+    if env_value:
+        if env_name == "PATH":
+            expanded = env_value.replace("${PATH}", os.environ.get("PATH", ""))
+            expanded = expanded.replace("%PATH%", os.environ.get("PATH", ""))
+            os.environ[env_name] = expanded
+        else:
+            os.environ[env_name] = env_value
+
+pythonpath = os.environ.get("PYTHONPATH", "")
+if pythonpath:
+    for path_entry in pythonpath.split(os.pathsep):
+        if path_entry and path_entry not in sys.path:
+            sys.path.insert(0, path_entry)
+
+try:
+    from osgeo import gdal
+except ModuleNotFoundError as exc:
+    raise ModuleNotFoundError(
+        "Unable to import osgeo.gdal. Check that your Python interpreter version "
+        "matches the installed GDAL bindings (for OSGeo4W, use the matching Python)."
+    ) from exc
 
 
 def describe_tiff(path: str, results_file: str = "") -> None:
@@ -115,8 +144,8 @@ def describe_tiff(path: str, results_file: str = "") -> None:
 
 
 def main() -> int:
-    path = r"C:\Data\imagery\BM36_5000_1010_RGBI.tiff"
-    results_file = r"C:\Data\imagery\BM36_5000_1010_RGBI.txt"
+    path = r"C:\Data\imagery\BM36_5000_1010_RGBI_gdal.tiff"
+    results_file = r"C:\Data\imagery\BM36_5000_1010_RGBI_gdal.txt"
 
     try:
         describe_tiff(path, results_file)

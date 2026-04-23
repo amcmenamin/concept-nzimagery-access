@@ -1,0 +1,11 @@
+[project]
+name = "imagery-using-gdal"
+version = "0.1.0"
+description = "Example code to download S3 imagery"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "gdal",
+    "rasterio",
+    "python-dotenv",
+]

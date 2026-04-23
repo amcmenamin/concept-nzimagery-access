@@ -7,7 +7,7 @@ formats = gdal.GetDriverCount()
 webp_supported = any(
     gdal.GetDriver(i).GetDescription() == "WEBP" for i in range(formats)
 )
-if webp_supported:
+if webp_supported:``
     print("GDAL has WEBP support.")
 else:
     print("GDAL does NOT have WEBP support.")

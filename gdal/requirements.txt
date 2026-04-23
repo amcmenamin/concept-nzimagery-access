@@ -1,0 +1,3 @@
+gdal>=3.0
+rasterio
+python-dotenv

@@ -319,12 +319,13 @@ def main() -> int:
     dataset = LINZ_DATASETS[args.dataset]
     bucket = args.bucket or dataset.bucket
     region = args.region or dataset.region
-    # path = args.path
-    # output_dir = args.output_dir
-    # output = args.output
-    path = "wellington/wellington_2025_0.2m/rgbnir/2193/BM36_5000_1010.tiff"
-    output_dir = r"c:\data\imagery"
-    output = "BM36_5000_1010_RGBI.tiff"
+    path = args.path
+    output_dir = args.output_dir
+    output = args.output
+    # path = "wellington/wellington_2025_0.2m/rgbnir/2193/BM36_5000_1010.tiff"
+    # output_dir = r"c:\data\imagery"
+    # output = "BM36_5000_1010_RGBI.tiff"
+    args.list_prefix = True
 
     store = get_public_store(bucket=bucket, region=region)
 

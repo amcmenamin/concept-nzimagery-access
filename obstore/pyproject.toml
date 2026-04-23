@@ -1,0 +1,9 @@
+[project]
+name = "imagery-using-obstore"
+version = "0.1.0"
+description = "Example of how to access open data S3 bucket to access imagery."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "obstore>=0.9.4",
+]
