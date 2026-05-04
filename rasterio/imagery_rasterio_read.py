@@ -1,4 +1,4 @@
-"""Read LINZ public datasets from AWS S3 using rasterio directly.
+"""Read NZ public datasets from AWS S3 using rasterio directly.
 
 This script uses rasterio to directly read imagery from AWS S3 without downloading.
 Particularly useful for Cloud Optimized GeoTIFFs (COGs).
@@ -31,7 +31,7 @@ class DatasetInfo:
     region: str
 
 
-LINZ_DATASETS: dict[str, DatasetInfo] = {
+NZ_DATASETS: dict[str, DatasetInfo] = {
     "imagery": DatasetInfo(bucket="nz-imagery", region="ap-southeast-2"),
     "elevation": DatasetInfo(bucket="nz-elevation", region="ap-southeast-2"),
     "coastal": DatasetInfo(bucket="nz-coastal", region="ap-southeast-2"),
@@ -205,13 +205,13 @@ def list_s3_objects(bucket: str, prefix: str, region: str) -> list[str]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Access LINZ public AWS datasets directly with rasterio."
+        description="Access NZ public AWS datasets directly with rasterio."
     )
     parser.add_argument(
         "--dataset",
-        choices=sorted(LINZ_DATASETS.keys()),
+        choices=sorted(NZ_DATASETS.keys()),
         default="imagery",
-        help="Known LINZ dataset alias (default: imagery).",
+        help="Known NZ dataset alias (default: imagery).",
     )
     parser.add_argument(
         "--bucket",
@@ -255,7 +255,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default="linz_rasterio_output.tiff",
+        default="NZ_rasterio_output.tiff",
         help="Local output filename for extracted data.",
     )
     return parser.parse_args()
@@ -264,7 +264,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
-    dataset = LINZ_DATASETS[args.dataset]
+    dataset = NZ_DATASETS[args.dataset]
     bucket = args.bucket or dataset.bucket
     region = args.region or dataset.region
     output = args.output

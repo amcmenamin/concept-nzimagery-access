@@ -110,7 +110,7 @@ result = gdal.Translate(
 
 ## 🔐 **Authentication Summary**
 
-**Public Buckets (LINZ datasets):**
+**Public Buckets (NZ datasets):**
 - **obstore**: `skip_signature=True`
 - **rasterio**: `aws_unsigned=True`
 - **GDAL**: `AWS_NO_SIGN_REQUEST='YES'`

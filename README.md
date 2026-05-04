@@ -3,6 +3,13 @@ These file contain example approaches to connecting to the imagery hosted on AWS
 NOTE: THIS IS NOT SYSTEM/APP CODE BUT A SET OF EXAMPLES. FEEL FREE TO COPY SECTIONS.
 THIS REPO IS FOR LEARNING / DEMO PURPOSES
 
+The examples used related to new zealand imagery purchased and supplied by NZ Authorites and managed on AWS open data 
+
+## Open Source Guide
+
+https://experience.arcgis.com/experience/45262b6f24ab463d856191a9728ab0f6/page/Open-Source-Guides
+
+
 ## Other tooling information can be found here
 
 ArcGIS Pro - https://storymaps.arcgis.com/collections/e6d212054d9744f399fcbed00a75ee43?item=1
@@ -14,7 +21,7 @@ Other tools / approaches - https://github.com/linz/imagery/blob/master/docs/usag
 
 A modern approach to creating chips: see: https://github.com/Clay-foundation/stacchip/
 
-NZ Example: https://github.com/Clay-foundation/stacchip/blob/main/stacchip/processors/linz_processor.py
+NZ Example: https://github.com/Clay-foundation/stacchip/blob/main/stacchip/processors/NZ_processor.py
 
 ## Creating a stacpg version
 

@@ -6,12 +6,12 @@
 
 NOTE: gdal,Translate by default will save using default compression typically no compression 
 
-`imagery_gdal_read.py` demonstrates how to download geospatial imagery from AWS S3 using GDAL's Virtual File System (`/vsis3/`). This script supports both public LINZ datasets and private S3 buckets with comprehensive authentication options.
+`imagery_gdal_read.py` demonstrates how to download geospatial imagery from AWS S3 using GDAL's Virtual File System (`/vsis3/`). This script supports both public NZ datasets and private S3 buckets with comprehensive authentication options.
 
 ## Features
 
 - ✅ **Direct S3 access** using GDAL's Virtual File System  
-- ✅ **Public bucket support** (LINZ imagery datasets)
+- ✅ **Public bucket support** (NZ imagery datasets)
 - ✅ **Private bucket authentication** (multiple methods)
 - ✅ **Performance timing** (download duration tracking)
 - ✅ **Automatic directory creation**
@@ -43,17 +43,17 @@ pip install gdal
 ### Quick Start - Public Datasets
 
 ```bash
-# Download from LINZ public imagery (default configuration)
+# Download from NZ public imagery (default configuration)
 python imagery_gdal_read.py
 ```
 
-This downloads a sample image from the New Zealand LINZ public datasets to `c:\data\imagery\image.tiff`.
+This downloads a sample image from the New Zealand NZ public datasets to `c:\data\imagery\image.tiff`.
 
 ### Configuration Options
 
 The script is pre-configured for different use cases. Edit the configuration section in the file:
 
-#### Public S3 Buckets (LINZ Datasets)
+#### Public S3 Buckets (NZ Datasets)
 ```python
 # Current default - works out of the box
 gdal.SetConfigOption('AWS_REGION', 'ap-southeast-2')
@@ -85,9 +85,9 @@ export AWS_DEFAULT_REGION=your_region
 python imagery_gdal_read.py
 ```
 
-## Available LINZ Datasets
+## Available NZ Datasets
 
-The script is configured to access New Zealand LINZ public datasets:
+The script is configured to access New Zealand NZ public datasets:
 
 | Dataset | Bucket | Region | Content |
 |---------|--------|---------|---------|
@@ -226,7 +226,7 @@ gdal.SetConfigOption('CPL_CURL_VERBOSE', 'YES')
 
 ## License
 
-This script is provided as-is for educational and research purposes. LINZ data is available under Creative Commons licenses - check individual dataset licenses.
+This script is provided as-is for educational and research purposes. NZ data is available under Creative Commons licenses - check individual dataset licenses.
 
 ## Support
 
@@ -234,6 +234,6 @@ For GDAL-related issues:
 - [GDAL Documentation](https://gdal.org/drivers/raster/vsis3.html)
 - [GDAL GitHub Issues](https://github.com/OSGeo/gdal/issues)
 
-For LINZ data questions:
-- [LINZ Public Datasets](https://www.linz.govt.nz/data)
+For NZ data questions:
+- [NZ Public Datasets](https://www.linz.govt.nz/data)
 - [AWS Open Data Registry](https://registry.opendata.aws/)

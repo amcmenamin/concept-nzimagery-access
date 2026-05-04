@@ -1,6 +1,6 @@
-"""Download catalog.json from LINZ public datasets using obstore.
+"""Download catalog.json from NZ public datasets using obstore.
 
-This script downloads the catalog.json file from the root of LINZ AWS S3 buckets
+This script downloads the catalog.json file from the root of NZ AWS S3 buckets
 to a specified output location.
 
 Install dependency:
@@ -38,7 +38,7 @@ class DatasetInfo:
     name: str
 
 
-LINZ_DATASETS: dict[str, DatasetInfo] = {
+NZ_DATASETS: dict[str, DatasetInfo] = {
     "imagery": DatasetInfo(
         bucket="nz-imagery", region="ap-southeast-2", name="NZ Imagery"
     ),
@@ -165,14 +165,14 @@ def list_available_catalogs(bucket: str, region: str) -> list[str]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Download catalog.json from LINZ public AWS datasets via obstore."
+        description="Download catalog.json from NZ public AWS datasets via obstore."
     )
 
     # Dataset selection
     parser.add_argument(
         "--dataset",
-        choices=sorted(LINZ_DATASETS.keys()),
-        help="LINZ dataset to download catalog from. If not specified, must provide --bucket and --region.",
+        choices=sorted(NZ_DATASETS.keys()),
+        help="NZ dataset to download catalog from. If not specified, must provide --bucket and --region.",
     )
 
     # Manual bucket/region override
@@ -223,12 +223,12 @@ def main() -> int:
 
     # Determine bucket and region
     if args.dataset:
-        if args.dataset not in LINZ_DATASETS:
+        if args.dataset not in NZ_DATASETS:
             print(
-                f"Error: Unknown dataset '{args.dataset}'. Available: {list(LINZ_DATASETS.keys())}"
+                f"Error: Unknown dataset '{args.dataset}'. Available: {list(NZ_DATASETS.keys())}"
             )
             return 1
-        dataset = LINZ_DATASETS[args.dataset]
+        dataset = NZ_DATASETS[args.dataset]
         bucket = args.bucket or dataset.bucket
         region = args.region or dataset.region
         dataset_name = dataset.name

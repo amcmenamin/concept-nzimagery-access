@@ -5,7 +5,7 @@ from imagery_aws_read import (
     download_dataset_images,
     get_public_store,
     download_all_images,
-    LINZ_DATASETS,
+    NZ_DATASETS,
 )
 
 
@@ -30,7 +30,7 @@ def example_custom_download():
     print("\n=== Custom Download Example ===")
 
     # Set up store manually for more control
-    dataset = LINZ_DATASETS["imagery"]
+    dataset = NZ_DATASETS["imagery"]
     store = get_public_store(bucket=dataset.bucket, region=dataset.region)
 
     # Download only TIFF files with custom settings
@@ -48,8 +48,8 @@ def example_custom_download():
 
 def list_available_datasets():
     """Show available datasets."""
-    print("\n=== Available LINZ Datasets ===")
-    for name, info in LINZ_DATASETS.items():
+    print("\n=== Available NZ Datasets ===")
+    for name, info in NZ_DATASETS.items():
         print(f"  {name}: {info.bucket} ({info.region})")
 
 

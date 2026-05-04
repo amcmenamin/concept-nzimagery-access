@@ -1,4 +1,4 @@
-"""Run GDAL raster info on LINZ public datasets from AWS S3.
+"""Run GDAL raster info on NZ public datasets from AWS S3.
 
 This script uses the new GDAL raster info command (GDAL 3.11+) to analyze
 imagery directly from AWS S3 without downloading. Supports both Cloud Optimized
@@ -68,7 +68,7 @@ class DatasetInfo:
     region: str
 
 
-LINZ_DATASETS: dict[str, DatasetInfo] = {
+NZ_DATASETS: dict[str, DatasetInfo] = {
     "imagery": DatasetInfo(bucket="nz-imagery", region="ap-southeast-2"),
     "elevation": DatasetInfo(bucket="nz-elevation", region="ap-southeast-2"),
     "coastal": DatasetInfo(bucket="nz-coastal", region="ap-southeast-2"),
@@ -428,7 +428,7 @@ def analyze_multiple_files(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run GDAL raster info on LINZ public AWS datasets.",
+        description="Run GDAL raster info on NZ public AWS datasets.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -436,9 +436,9 @@ def parse_args() -> argparse.Namespace:
     # Dataset selection
     parser.add_argument(
         "--dataset",
-        choices=sorted(LINZ_DATASETS.keys()),
+        choices=sorted(NZ_DATASETS.keys()),
         default="imagery",
-        help="LINZ dataset to access (default: imagery).",
+        help="NZ dataset to access (default: imagery).",
     )
     parser.add_argument(
         "--bucket", default="", help="Override bucket name directly (optional)."
@@ -519,7 +519,7 @@ def main() -> int:
     if args.bucket and args.region:
         bucket, region = args.bucket, args.region
     else:
-        dataset_info = LINZ_DATASETS[args.dataset]
+        dataset_info = NZ_DATASETS[args.dataset]
         bucket = args.bucket or dataset_info.bucket
         region = args.region or dataset_info.region
 

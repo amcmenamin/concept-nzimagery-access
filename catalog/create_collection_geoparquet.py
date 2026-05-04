@@ -46,8 +46,8 @@ class DatasetInfo:
     region: str
 
 
-# LINZ dataset configurations
-LINZ_DATASETS: Dict[str, DatasetInfo] = {
+# NZ dataset configurations
+NZ_DATASETS: Dict[str, DatasetInfo] = {
     "imagery": DatasetInfo(bucket="nz-imagery", region="ap-southeast-2"),
     "elevation": DatasetInfo(bucket="nz-elevation", region="ap-southeast-2"),
     "coastal": DatasetInfo(bucket="nz-coastal", region="ap-southeast-2"),
@@ -215,8 +215,8 @@ def process_catalog_to_csv(
     print(f"Processing {len(unique_types)} unique data types: {list(unique_types)}")
 
     # Create S3 store for reading collection files
-    dataset_info = LINZ_DATASETS.get(
-        "imagery", LINZ_DATASETS["imagery"]
+    dataset_info = NZ_DATASETS.get(
+        "imagery", NZ_DATASETS["imagery"]
     )  # Default to imagery
     store = get_public_store(bucket, dataset_info.region)
 

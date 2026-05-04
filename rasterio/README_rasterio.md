@@ -1,6 +1,6 @@
-# LINZ Imagery Access with Rasterio
+# NZ Imagery Access with Rasterio
 
-This script (`imagery_rasterio_read.py`) provides direct access to LINZ public datasets on AWS S3 using rasterio, without needing to download full files first. It's particularly efficient for Cloud Optimized GeoTIFFs (COGs).
+This script (`imagery_rasterio_read.py`) provides direct access to NZ public datasets on AWS S3 using rasterio, without needing to download full files first. It's particularly efficient for Cloud Optimized GeoTIFFs (COGs).
 
 ## Installation
 
@@ -189,7 +189,7 @@ If you encounter errors:
 
 1. **Access errors**: Ensure you have internet connectivity and the file path exists
 2. **Memory errors**: Use smaller bounding boxes or higher overview levels
-3. **CRS errors**: Check coordinate system - LINZ data is typically in NZGD2000 (EPSG:2193)
+3. **CRS errors**: Check coordinate system - NZ data is typically in NZGD2000 (EPSG:2193)
 4. **Timeout errors**: Try smaller areas or use overview levels
 
 ## Output Information

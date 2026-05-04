@@ -12,7 +12,7 @@ from imagery_rasterio_read import (
     read_raster_window,
     save_raster,
     list_s3_objects,
-    LINZ_DATASETS,
+    NZ_DATASETS,
 )
 
 
@@ -24,7 +24,7 @@ def example_metadata_only():
     session = setup_aws_session()
 
     # Access the Waikato imagery file
-    dataset = LINZ_DATASETS["imagery"]
+    dataset = NZ_DATASETS["imagery"]
     # path = "taranaki/taranaki_2022-2023_0.1m/rgb/2193/BQ31_10000_0101.tiff"
     path = "waikato/waikato_2023-2024_0.3m/rgbnir/2193/AZ34_10000_0201.tiff"
     s3_url = build_s3_url(dataset.bucket, path)
@@ -52,7 +52,7 @@ def example_region_extract():
     print("\n=== Region Extract Example ===")
 
     session = setup_aws_session()
-    dataset = LINZ_DATASETS["imagery"]
+    dataset = NZ_DATASETS["imagery"]
     path = "waikato/waikato_2023-2024_0.3m/rgbnir/2193/AZ34_10000_0201.tiff"
     s3_url = build_s3_url(dataset.bucket, path)
 
@@ -83,7 +83,7 @@ def example_overview_access():
     print("\n=== Overview Access Example ===")
 
     session = setup_aws_session()
-    dataset = LINZ_DATASETS["imagery"]
+    dataset = NZ_DATASETS["imagery"]
     path = "waikato/waikato_2023-2024_0.3m/rgbnir/2193/AZ34_10000_0201.tiff"
     s3_url = build_s3_url(dataset.bucket, path)
 
@@ -115,7 +115,7 @@ def example_list_available_files():
     """Example: List available files in a dataset directory."""
     print("\n=== File Listing Example ===")
 
-    dataset = LINZ_DATASETS["imagery"]
+    dataset = NZ_DATASETS["imagery"]
     prefix = "waikato/waikato_2023-2024_0.3m/rgbnir/2193/"
 
     print(f"📂 Listing files in: s3://{dataset.bucket}/{prefix}")
@@ -144,7 +144,7 @@ def example_batch_processing():
     print("\n=== Batch Processing Example ===")
 
     session = setup_aws_session()
-    dataset = LINZ_DATASETS["imagery"]
+    dataset = NZ_DATASETS["imagery"]
     prefix = "waikato/waikato_2023-2024_0.3m/rgbnir/2193/"
 
     # Get list of files
@@ -180,14 +180,14 @@ def example_batch_processing():
 
 
 def show_datasets():
-    """Show available LINZ datasets."""
-    print("=== Available LINZ Datasets ===")
-    for name, info in LINZ_DATASETS.items():
+    """Show available NZ datasets."""
+    print("=== Available NZ Datasets ===")
+    for name, info in NZ_DATASETS.items():
         print(f"  📦 {name}: s3://{info.bucket}/ ({info.region})")
 
 
 if __name__ == "__main__":
-    print("🌟 LINZ Imagery Access Examples using Rasterio")
+    print("🌟 NZ Imagery Access Examples using Rasterio")
     print("=" * 50)
 
     # Show available datasets

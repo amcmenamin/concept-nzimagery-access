@@ -6,7 +6,7 @@ This directory contains Jupyter notebooks demonstrating various approaches to ac
 
 ### 01_imagery_aws_read.ipynb
 **AWS S3 Imagery Access**
-- Direct access to LINZ imagery datasets using `obstore` and AWS SDK
+- Direct access to NZ imagery datasets using `obstore` and AWS SDK
 - Bulk download examples for offline processing
 - Authentication methods for both public and private datasets
 - Performance optimization for large dataset downloads
@@ -60,7 +60,7 @@ pip install matplotlib
 ```
 
 ### AWS Configuration
-Most examples work with public LINZ datasets that don't require authentication. For private datasets:
+Most examples work with public NZ datasets that don't require authentication. For private datasets:
 - Configure AWS credentials via `aws configure`
 - Or set environment variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
 

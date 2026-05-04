@@ -8,7 +8,7 @@ from osgeo import gdal
 # CONFIGURATION: Choose PUBLIC or PRIVATE S3 access
 # =============================================================================
 
-# Option 1: PUBLIC S3 bucket access (LINZ datasets)
+# Option 1: PUBLIC S3 bucket access (NZ datasets)
 # Configure GDAL for AWS S3 public bucket access
 gdal.SetConfigOption("AWS_REGION", "ap-southeast-2")
 gdal.SetConfigOption("AWS_NO_SIGN_REQUEST", "YES")
