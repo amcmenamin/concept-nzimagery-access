@@ -3,7 +3,10 @@ These file contain example approaches to connecting to the imagery hosted on AWS
 NOTE: THIS IS NOT SYSTEM/APP CODE BUT A SET OF EXAMPLES. FEEL FREE TO COPY SECTIONS.
 THIS REPO IS FOR LEARNING / DEMO PURPOSES
 
-The examples used related to new zealand imagery purchased and supplied by NZ Authorites and managed on AWS open data 
+The examples used related to new zealand imagery purchased and supplied by NZ Authorites and managed on AWS open data. Toitū Te Whenua works with councils and other partners to make New Zealand’s most up-to-date public sector aerial imagery freely available for re-use.
+
+see: https://www.linz.govt.nz/products-services/data/types-linz-data/aerial-imagery
+
 
 ## Open Source Guide
 
