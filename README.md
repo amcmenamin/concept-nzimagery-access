@@ -1,16 +1,19 @@
-These file contain example approaches to connecting to the imagery hosted on AWS.
+These file contain example approaches to connecting to the open imagery hosted on AWS.
 
 NOTE: THIS IS NOT SYSTEM/APP CODE BUT A SET OF EXAMPLES. FEEL FREE TO COPY SECTIONS.
 THIS REPO IS FOR LEARNING / DEMO PURPOSES
 
+**Folders:** gdal, obstore and rasterio - have example code to connect to open datasets and extract information and layer
+
+**Folder:** catalog - has example of access the STAC catalog and items information and creating bounding boxes.
+
+**Folder:** rgbi-examples - show concepts of doing standard queries like NVDI against RGBI imagery and making surface of surface models.
+
+
+
 The examples used related to new zealand imagery purchased and supplied by NZ Authorites and managed on AWS open data. Toitū Te Whenua works with councils and other partners to make New Zealand’s most up-to-date public sector aerial imagery freely available for re-use.
 
 see: https://www.linz.govt.nz/products-services/data/types-linz-data/aerial-imagery
-
-
-## Open Source Guide
-
-https://experience.arcgis.com/experience/45262b6f24ab463d856191a9728ab0f6/page/Open-Source-Guides
 
 
 ## Other tooling information can be found here
@@ -24,13 +27,15 @@ Other tools / approaches - https://github.com/linz/imagery/blob/master/docs/usag
 
 A modern approach to creating chips: see: https://github.com/Clay-foundation/stacchip/
 
-NZ Example: https://github.com/Clay-foundation/stacchip/blob/main/stacchip/processors/NZ_processor.py
+NZ Example: https://github.com/Clay-foundation/stacchip/blob/main/stacchip/processors/linz_processor.py
 
 ## Creating a stacpg version
 
 https://github.com/vincentsarago/MAXAR_opendata_to_pgstac
 
 NZ Imagery - https://github.com/vincentsarago/MAXAR_opendata_to_pgstac/tree/main/Linz
+
+See CATALOG folder for other example code to access catalogs and items.
 
 ## Find the collection of tiff images to use has several approaches
 
@@ -67,3 +72,11 @@ RGBI includes 5 bands: ['Red', 'Green', 'Blue', 'NIR', 'Alpha']
 ## Latest aerial configuration
 
 https://github.com/linz/basemaps-config/blob/master/config/tileset/aerial.json
+
+## Open Source Guide
+
+Guides for using LiDAR and Elevation data in QGIS
+
+https://experience.arcgis.com/experience/45262b6f24ab463d856191a9728ab0f6/page/Open-Source-Guides
+
+

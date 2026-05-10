@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import pandas as pd
 from pathlib import Path
 from typing import Dict, Any, Optional, List
@@ -88,6 +89,55 @@ def url_to_s3_path(url: str) -> str:
     return parsed.path.lstrip("/")
 
 
+def extract_href_metadata(href: str) -> Dict[str, Any]:
+    """
+    Extract date_range, gsd, and cellsize_cm from collection href.
+    
+    Expected format: ./region/region_YYYY-YYYY_0.Xm/type/crs/collection.json
+    Example: ./waikato/waikato_2023-2024_0.3m/rgbnir/2193/collection.json
+    
+    Args:
+        href: Collection href string
+        
+    Returns:
+        Dict with date_range, gsd (str), and cellsize_cm (int)
+    """
+    metadata = {
+        "date_range": None,
+        "gsd": None,
+        "cellsize_cm": None,
+    }
+    
+    try:
+        # Remove leading ./ and trailing /collection.json
+        clean_path = href.replace("./", "").replace("/collection.json", "")
+        parts = clean_path.split("/")
+        
+        if len(parts) >= 4:
+            # Second part contains metadata, e.g., 'waikato_2023-2024_0.3m'
+            metadata_part = parts[4]
+            
+            # Extract date_range (YYYY-YYYY pattern)
+            date_match = re.search(r'(\d{4}-\d{4})', metadata_part)
+            if date_match:
+                metadata["date_range"] = date_match.group(1)
+            
+            # Extract gsd (e.g., 0.3m, 1.5m)
+            gsd_match = re.search(r'([\d.]+m)', metadata_part)
+            if gsd_match:
+                gsd_str = gsd_match.group(1)
+                metadata["gsd"] = gsd_str
+                
+                # Calculate cellsize_cm from gsd
+                gsd_value = float(gsd_str.replace('m', ''))
+                metadata["cellsize_cm"] = int(gsd_value * 100)
+    
+    except Exception as e:
+        print(f"      Error parsing href metadata: {e}")
+    
+    return metadata
+
+
 def process_collection_items(
     collection_href: str, store: S3Store
 ) -> List[Dict[str, Any]]:
@@ -119,6 +169,9 @@ def process_collection_items(
         item_links = [link for link in links if link.get("rel") == "item"]
 
         print(f"   Found {len(item_links)} item links")
+
+        # Extract href metadata (date_range, gsd, cellsize_cm)
+        href_metadata = extract_href_metadata(collection_href)
 
         # Process each item
         for idx, item_link in enumerate(item_links, 1):
@@ -152,6 +205,8 @@ def process_collection_items(
                     minx, miny, maxx, maxy = bbox[0], bbox[1], bbox[2], bbox[3]
                     geometry = box(minx, miny, maxx, maxy)
 
+
+
                 # Extract relevant metadata from item
                 item_metadata = {
                     "collection_href": collection_href,
@@ -176,6 +231,9 @@ def process_collection_items(
                     ),
                     "geometry": geometry,
                 }
+
+                # Add href-extracted metadata
+                item_metadata.update(href_metadata)
 
                 # Extract bbox if available
                 bbox = item_data.get("bbox", [])
@@ -216,8 +274,8 @@ def process_collection_items(
 def main():
     """Main processing function."""
     # Configuration
-    csv_input_path = r"c:\temp\nz_imagery_collections_rgbnir.csv"  # Change as needed
-    output_dir = r"c:\temp"
+    csv_input_path = r"c:\temp\imagery\nz_imagery_collections_rgbnir.csv"  # Change as needed
+    output_dir = r"c:\temp\imagery"
 
     print("=" * 60)
     print("PROCESSING COLLECTION ITEMS")
