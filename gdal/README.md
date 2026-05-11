@@ -4,18 +4,33 @@
 
 ## Overview
 
-NOTE: gdal,Translate by default will save using default compression typically no compression 
+NOTE: gdal.Translate by default will save using default compression typically no compression 
+
+Note: CreateCopy is another option
+
+https://gdal.org/en/stable/api/python/raster_api.html
+
+from osgeo import gdal
+
+**Open the source**
+source_ds = gdal.Open('source.tif')
+
+**Create a copy**
+driver = gdal.GetDriverByName('GTiff')
+destination_ds = driver.CreateCopy('destination.tif', source_ds)
+
+**Close datasets**
+destination_ds = None
+source_ds = None
+
+## Example
 
 `imagery_gdal_read.py` demonstrates how to download geospatial imagery from AWS S3 using GDAL's Virtual File System (`/vsis3/`). This script supports both public NZ datasets and private S3 buckets with comprehensive authentication options.
 
-## Features
+source_url = (
+    "/vsis3/nz-imagery/taranaki/taranaki_2022-2023_0.1m/rgb/2193/BH28_500_095032.tiff"
+)
 
-- ✅ **Direct S3 access** using GDAL's Virtual File System  
-- ✅ **Public bucket support** (NZ imagery datasets)
-- ✅ **Private bucket authentication** (multiple methods)
-- ✅ **Performance timing** (download duration tracking)
-- ✅ **Automatic directory creation**
-- ✅ **Error handling** and status reporting
 
 ## Requirements
 
@@ -25,17 +40,21 @@ NOTE: gdal,Translate by default will save using default compression typically no
 
 ### Installation
 
+If using QGIS or ArcGIS Pro GDAL already installed.
+
 ```bash
 # Install GDAL (choose one method):
 
-# Option 1: conda (recommended)
+# Option 1: Windows (OSGeo4W)
+# Download and install from: https://trac.osgeo.org/osgeo4w/
+
+# Option 2: conda (recommended)
 conda install -c conda-forge gdal
 
-# Option 2: pip (may require system GDAL)
+# Option 3: pip (may require system GDAL)
 pip install gdal
 
-# Option 3: Windows (OSGeo4W)
-# Download and install from: https://trac.osgeo.org/osgeo4w/
+
 ```
 
 ## Usage
