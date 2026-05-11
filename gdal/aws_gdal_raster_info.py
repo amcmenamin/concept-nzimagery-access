@@ -23,13 +23,7 @@ Examples:
         # Get comprehensive analysis with all metadata
         python aws_gdal_raster_info.py --format json --stats --hist --min-max
 
-        # List available files first
-        python aws_gdal_raster_info.py --list-prefix
-
-        # Analyze multiple files from a directory
-        python aws_gdal_raster_info.py --analyze-all --limit 5
-
-        # Check if files are valid COGs
+        # Check if file is a valid COG
         python aws_gdal_raster_info.py --check-cog
 """
 
@@ -51,15 +45,6 @@ try:
 except ImportError:
     print("Warning: GDAL Python bindings not available. Will use command line only.")
     HAS_GDAL_PYTHON = False
-
-try:
-    import obstore as obs
-    from obstore.store import S3Store
-
-    HAS_OBSTORE = True
-except ImportError:
-    print("Warning: obstore not available. Install with: pip install obstore")
-    HAS_OBSTORE = False
 
 
 @dataclass(frozen=True)
@@ -94,38 +79,7 @@ def setup_gdal_aws_config(region: str) -> None:
     gdal.SetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ".tif,.tiff")
 
 
-def get_public_store(bucket: str, region: str) -> Optional[S3Store]:
-    """Create an unsigned S3 store for public AWS Open Data buckets."""
-    if not HAS_OBSTORE:
-        return None
-    return S3Store(
-        bucket=bucket,
-        region=region,
-        skip_signature=True,
-    )
 
-
-def list_objects(
-    store: S3Store,
-    prefix: str,
-    *,
-    endswith: str = "",
-    limit: int = 0,
-) -> list[str]:
-    """List object paths under a prefix, optionally filtering by suffix and limit."""
-    paths: list[str] = []
-    stream = obs.list(store, prefix=prefix)
-
-    for chunk in stream:
-        for item in chunk:
-            path = item["path"]
-            if endswith and not path.endswith(endswith):
-                continue
-            paths.append(path)
-            if limit > 0 and len(paths) >= limit:
-                return paths
-
-    return paths
 
 
 def run_gdal_raster_info_cli(
@@ -352,78 +306,7 @@ def analyze_raster(
     return result
 
 
-def analyze_multiple_files(
-    bucket: str,
-    prefix: str,
-    region: str,
-    *,
-    limit: int = 0,
-    format_type: str = "text",
-    file_extensions: tuple[str, ...] = (".tif", ".tiff"),
-    **kwargs,
-) -> list[dict[str, Any]]:
-    """Analyze multiple raster files from an S3 prefix."""
-    if not HAS_OBSTORE:
-        print("obstore required for listing files. Install with: pip install obstore")
-        return []
 
-    store = get_public_store(bucket, region)
-    if not store:
-        return []
-
-    print(f"Finding raster files in: s3://{bucket}/{prefix}")
-
-    # List raster files
-    all_paths = list_objects(
-        store, prefix, limit=limit * 2 if limit > 0 else 0
-    )  # Get extra to filter
-    raster_paths = (
-        [
-            path
-            for path in all_paths
-            if any(path.lower().endswith(ext) for ext in file_extensions)
-        ][:limit]
-        if limit > 0
-        else [
-            path
-            for path in all_paths
-            if any(path.lower().endswith(ext) for ext in file_extensions)
-        ]
-    )
-
-    if not raster_paths:
-        print("No raster files found.")
-        return []
-
-    print(f"Found {len(raster_paths)} raster files to analyze")
-
-    results = []
-    for i, path in enumerate(raster_paths, 1):
-        print(f"\n--- File {i}/{len(raster_paths)} ---")
-        try:
-            result = analyze_raster(
-                bucket, path, region, format_type=format_type, **kwargs
-            )
-
-            analysis = {
-                "path": path,
-                "url": f"s3://{bucket}/{path}",
-                "success": True,
-                "info": result,
-            }
-            results.append(analysis)
-
-        except Exception as e:
-            print(f"Error analyzing {path}: {e}")
-            analysis = {
-                "path": path,
-                "url": f"s3://{bucket}/{path}",
-                "success": False,
-                "error": str(e),
-            }
-            results.append(analysis)
-
-    return results
 
 
 def parse_args() -> argparse.Namespace:
@@ -450,24 +333,6 @@ def parse_args() -> argparse.Namespace:
         "--path",
         default="taranaki/taranaki_2022-2023_0.1m/rgb/2193/BH28_500_095032.tiff",
         help="Object key/path to specific raster file.",
-    )
-
-    # Listing mode
-    parser.add_argument(
-        "--list-prefix",
-        action="store_true",
-        help="List available raster files under --path prefix.",
-    )
-    parser.add_argument(
-        "--analyze-all",
-        action="store_true",
-        help="Analyze all raster files under --path prefix.",
-    )
-    parser.add_argument(
-        "--limit",
-        type=int,
-        default=0,
-        help="Limit number of files to process (0 = no limit).",
     )
 
     # Output format
@@ -501,12 +366,6 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use command line gdal instead of Python bindings.",
     )
-    parser.add_argument(
-        "--file-extensions",
-        nargs="+",
-        default=[".tif", ".tiff"],
-        help="File extensions to consider as rasters.",
-    )
 
     return parser.parse_args()
 
@@ -530,94 +389,30 @@ def main() -> int:
     print()
 
     try:
-        if args.list_prefix:
-            # List available files
-            if not HAS_OBSTORE:
-                print(
-                    "Error: obstore required for listing. Install with: pip install obstore"
-                )
-                return 1
+        # Analyze single file
+        result = analyze_raster(
+            bucket,
+            args.path,
+            region,
+            format_type=args.format,
+            min_max=args.min_max,
+            stats=args.stats,
+            approx_stats=args.approx_stats,
+            hist=args.hist,
+            use_cli=args.use_cli,
+            check_cog=args.check_cog,
+        )
 
-            store = get_public_store(bucket, region)
-            if not store:
-                return 1
-
-            print(f"Listing raster files in: s3://{bucket}/{args.path}")
-            files = list_objects(
-                store,
-                args.path,
-                endswith="",  # Don't filter here
-                limit=args.limit,
-            )
-
-            # Filter for raster files
-            raster_files = [
-                f
-                for f in files
-                if any(f.lower().endswith(ext) for ext in args.file_extensions)
-            ]
-
-            print(f"Found {len(raster_files)} raster files:")
-            for file_path in raster_files:
-                print(f"  {file_path}")
-
-        elif args.analyze_all:
-            # Analyze multiple files
-            results = analyze_multiple_files(
-                bucket,
-                args.path,
-                region,
-                limit=args.limit,
-                format_type=args.format,
-                file_extensions=tuple(args.file_extensions),
-                min_max=args.min_max,
-                stats=args.stats,
-                approx_stats=args.approx_stats,
-                hist=args.hist,
-                use_cli=args.use_cli,
-                check_cog=args.check_cog,
-            )
-
-            # Output results
-            if args.format == "json":
-                print(json.dumps(results, indent=2))
+        if args.format == "json":
+            if isinstance(result, dict):
+                print(json.dumps(result, indent=2))
             else:
-                for result in results:
-                    print(f"\n{'=' * 60}")
-                    print(f"File: {result['path']}")
-                    if result["success"]:
-                        if isinstance(result["info"], dict):
-                            pprint.pprint(result["info"])
-                        else:
-                            print(result["info"])
-                    else:
-                        print(f"ERROR: {result['error']}")
-
+                print(json.dumps({"output": result}, indent=2))
         else:
-            # Analyze single file
-            result = analyze_raster(
-                bucket,
-                args.path,
-                region,
-                format_type=args.format,
-                min_max=args.min_max,
-                stats=args.stats,
-                approx_stats=args.approx_stats,
-                hist=args.hist,
-                use_cli=args.use_cli,
-                check_cog=args.check_cog,
-            )
-
-            if args.format == "json":
-                if isinstance(result, dict):
-                    print(json.dumps(result, indent=2))
-                else:
-                    print(json.dumps({"output": result}, indent=2))
+            if isinstance(result, dict):
+                pprint.pprint(result)
             else:
-                if isinstance(result, dict):
-                    pprint.pprint(result)
-                else:
-                    print(result)
+                print(result)
 
     except KeyboardInterrupt:
         print("\nAborted by user.")
@@ -630,4 +425,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
