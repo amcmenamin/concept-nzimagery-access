@@ -22,6 +22,10 @@ ArcGIS Pro - https://storymaps.arcgis.com/collections/e6d212054d9744f399fcbed00a
 
 Other tools / approaches - https://github.com/linz/imagery/blob/master/docs/usage.md
 
+## ML code example - geotorch
+
+Google Satellite Embedding with TorchGeo - https://opengeoai.org/examples/google_satellite_embedding/
+
 
 ## Creating chips - other code examples
 
