@@ -374,6 +374,7 @@ def main() -> int:
             size = download_object(
                 store=store, path=path, output_file=os.path.join(output_dir, output)
             )
+
             duration = time.time() - starttime
             print(f"Download completed in {duration:.2f} seconds")
             print(f"Successfully downloaded to {os.path.join(output_dir, output)}")

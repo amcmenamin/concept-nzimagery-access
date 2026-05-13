@@ -1,1 +1,3 @@
 obstore
+geopandas
+shapely
