@@ -10,7 +10,7 @@ import posixpath
 from arcpy import AIO
 
 # --- Step 1: Set workspace and study area ---
-workspace = r"C:\data\imagery\test"
+workspace = r"C:\data\imagery"
 gdb_path = os.path.join(workspace, "study_areas.gdb")
 study_layer = "study_area1"
 filter_region = "wellington/wellington"
