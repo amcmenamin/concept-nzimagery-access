@@ -10,7 +10,7 @@ import posixpath
 from arcpy import AIO
 
 # --- Step 1: Set workspace and study area ---
-workspace = r"C:\data\imagery"
+workspace = r"C:\data\imagery\test"
 gdb_path = os.path.join(workspace, "study_areas.gdb")
 study_layer = "study_area1"
 filter_region = "wellington/wellington"
@@ -87,7 +87,9 @@ if gsd_filter:
     s3_paths = [path for path in s3_paths if gsd_filter in path.lower()]
 
 if use_rgbnir:
-    s3_paths = [path for path in s3_paths if "rgbnir" in path.lower()]
+    s3_paths = [path for path in s3_paths if "rgbnir/" in path.lower()]
+else:
+    s3_paths = [path for path in s3_paths if "rgb/" in path.lower()]
 
 
 # --- Step 4: List and read JSON files in S3 path, extract bbox ---
@@ -126,12 +128,12 @@ for study_poly in study_polys:
             ]), source_srid)
 
             out_sr = arcpy.SpatialReference(2193)
-            print(bbox_poly.spatialReference.name)
+            # print(bbox_poly.spatialReference.name)
             bbox_poly = bbox_poly.projectAs(out_sr, "NZGD_2000_To_WGS_1984_1")
 
             # --- Step 5: Check intersection for this study polygon ---
             # Returns True when polygons intersect in any way.
-            if not study_poly.overlaps(bbox_poly):
+            if study_poly.disjoint(bbox_poly):
                 print(f"No overlap between study area and {json_rel_path}, skipping. - bbox: {bbox_poly.extent}")
                 continue
             
