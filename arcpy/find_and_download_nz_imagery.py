@@ -13,9 +13,9 @@ from arcpy import AIO
 workspace = r"C:\data\imagery"
 gdb_path = os.path.join(workspace, "study_areas.gdb")
 study_layer = "study_area1"
-filter_region = "wellington/wellington"
-filter_date = "2021"
-filter_gsd = "0.3m"
+filter_region = "wellington"
+filter_date = "2025"
+filter_gsd = "0.2m"
 use_rgbnir = True
 use_service = False
 
