@@ -4,10 +4,15 @@ import argparse
 import logging
 from pathlib import Path
 
-from extract_geoparquet_layer import GeoParquetLayer
+try:
+	from src.configuration import Config
+	from src.extract_geoparquet_layer import GeoParquetLayer
+except ModuleNotFoundError:
+	from configuration import Config
+	from extract_geoparquet_layer import GeoParquetLayer
 
 
-URL_PATH = "https://d1jzh93b1t1cv.cloudfront.net/data"
+CONFIG = Config()
 LAYER_NAMES = ("airport", "building_point")
 EXPORT_FOLDER = Path("exports")
 logger = logging.getLogger(__name__)
@@ -41,23 +46,31 @@ def parse_arguments() -> argparse.Namespace:
 	parser = argparse.ArgumentParser(
 		description="Export remote GeoParquet layers with DuckDB Spatial."
 	)
-	parser.add_argument(
-		"layers",
-		nargs="*",
-		metavar="LAYER",
-		default=LAYER_NAMES,
-		help="Layer names to export (default: airport building_point).",
-	)
-	parser.add_argument(
+	layer_group = parser.add_mutually_exclusive_group()
+	layer_group.add_argument(
 		"--layer-names",
 		type=parse_layer_names,
 		metavar="LAYER[,LAYER...]",
-		help="Comma-separated layer names; overrides positional LAYER values.",
+		help="Comma-separated layer names (default: airport,building_point).",
+	)
+	layer_group.add_argument(
+		"--layer-config",
+		type=Path,
+		metavar="PATH",
+		help="Path to a YAML layer configuration file.",
 	)
 	parser.add_argument(
-		"--url-path",
-		default=URL_PATH,
-		help="Dataset URL root (default: %(default)s).",
+		"--url-data-path",
+		default=CONFIG.url_data_path,
+		metavar="NAME",
+		help="URL data path key from the URL config (default: %(default)s).",
+	)
+	parser.add_argument(
+		"--url-path-config",
+		type=Path,
+		default=CONFIG.url_path_config,
+		metavar="PATH",
+		help="Path to the URL data path YAML file.",
 	)
 	parser.add_argument(
 		"--export-folder",
@@ -94,13 +107,19 @@ def main() -> None:
 		level=logging.INFO,
 		format="%(asctime)s %(levelname)s %(message)s",
 	)
-	selected_layers = arguments.layer_names or arguments.layers
+	selected_layers = arguments.layer_names or LAYER_NAMES
+	if arguments.layer_config is not None:
+		selected_layers = tuple(Config(layer_file=arguments.layer_config).layers)
+	url_config = Config(
+		url_data_path=arguments.url_data_path,
+		url_path_config=arguments.url_path_config,
+	)
 	for layer_name in selected_layers:
 		bbox = arguments.bbox_name or (
 			arguments.extent if arguments.extent is not None else "NZ_MAINLAND"
 		)
 		layer = GeoParquetLayer(
-			arguments.url_path,
+			url_config.url_path,
 			layer_name,
 			bbox=bbox,
 			export_folder=export_folder,

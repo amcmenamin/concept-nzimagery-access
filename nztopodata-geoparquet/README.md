@@ -14,7 +14,7 @@ mainland New Zealand bounding box.
 
 ```powershell
 uv sync
-uv run python extract_geoparquet_layer.py
+uv run python src/extract_geoparquet_layer.py
 ```
 
 ## Docker
@@ -32,7 +32,7 @@ geoparquet-export --help` to view them.
 ## Use As A Class
 
 ```python
-from extract_geoparquet_layer import GeoParquetLayer
+from src.extract_geoparquet_layer import GeoParquetLayer
 
 airports = GeoParquetLayer(
 	"https://d1jzh93b1t1cv.cloudfront.net/data",
@@ -81,18 +81,18 @@ Run the default airport and building-point exports for all configured New
 Zealand regions:
 
 ```powershell
-uv run python run_extract_geoparquet.py
+uv run python -m src.run_extract_geoparquet
 ```
 
 Use `--help` to view the available options. Layer names are positional; use
 `--bbox-name` for a named region or `--extent` for four explicit coordinates:
 
 ```powershell
-uv run python run_extract_geoparquet.py --help
-uv run python run_extract_geoparquet.py airport --bbox-name CHATHAM_ISLANDS
-uv run python run_extract_geoparquet.py --layer-names airport,building_point
-uv run python run_extract_geoparquet.py building_point --extent 174.7,-41.4,174.9,-41.2
-uv run python run_extract_geoparquet.py airport --export-folder data/exports
+uv run python -m src.run_extract_geoparquet --help
+uv run python -m src.run_extract_geoparquet --layer-names airport --bbox-name CHATHAM_ISLANDS
+uv run python -m src.run_extract_geoparquet --layer-names airport,building_point
+uv run python -m src.run_extract_geoparquet --layer-names building_point --extent 174.7,-41.4,174.9,-41.2
+uv run python -m src.run_extract_geoparquet --layer-config src/config/nztopo_layers.yml --export-folder data/exports
 ```
 
 Supported `--bbox-name` values:

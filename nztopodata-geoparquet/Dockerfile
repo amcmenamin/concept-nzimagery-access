@@ -10,6 +10,8 @@ ENV UV_COMPILE_BYTECODE=1 \
 COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev
 
-COPY extract_geoparquet_layer.py run_extract_geoparquet.py ./
+WORKDIR /app/src
 
-ENTRYPOINT ["uv", "run", "--no-sync", "python", "run_extract_geoparquet.py"]
+COPY src ./
+
+ENTRYPOINT ["uv", "run", "--no-sync", "python", "-m", "run_extract_geoparquet"]
